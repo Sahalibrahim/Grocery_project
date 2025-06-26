@@ -7,6 +7,7 @@ from .models import Users
 from rest_framework import status
 from .permissions import role_required
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.hashers import check_password
 
 
 #List the current user
@@ -33,7 +34,6 @@ def Register(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login(request):
-    from django.contrib.auth.hashers import check_password
 
     email = request.data.get('email')
     password = request.data.get('password')
@@ -101,3 +101,9 @@ def block_user(request,id):
             user.save()
             return Response({"message":"User unblocked successfully."},status=200)
     return Response({"message":"The is no user."},status=400)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def logout(request):
+    return Response({"message":"User logged out successfully"},status=200)

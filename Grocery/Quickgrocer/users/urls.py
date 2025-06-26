@@ -7,4 +7,5 @@ urlpatterns = [
     path('list-users/',views.list_users,name='list-users'),
     path('login/',views.login,name='login'),
     path('block_user/<str:id>/',views.block_user,name='block_user'),
+    path('logout/',views.logout,name='logout'),
 ]
