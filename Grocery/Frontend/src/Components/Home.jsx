@@ -29,7 +29,7 @@ const Home = () => {
                             </button>
                         </div> */}
                         <div className="d-flex">
-                            <a onClick={()=>navigate('/user_details')} style={{cursor:"pointer"}} className="nav-link me-3"><FaUser size={20} /></a>
+                            <a onClick={()=>navigate('/user_profile')} style={{cursor:"pointer"}} className="nav-link me-3"><FaUser size={20} /></a>
                             <a href="#" style={{cursor:"pointer"}} className="nav-link"><FaShoppingCart size={20} /></a>
                         </div>
                     </div>

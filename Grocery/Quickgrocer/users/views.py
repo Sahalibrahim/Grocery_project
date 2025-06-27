@@ -8,6 +8,7 @@ from rest_framework import status
 from .permissions import role_required
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import check_password
+from django.http import FileResponse
 
 
 #List the current user
@@ -24,10 +25,13 @@ def list_users(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def Register(request):
+    print("entering")
+    print(request.data)
     serializer = UserRegisterSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data,status=status.HTTP_200_OK)
+    print(serializer.errors)
     return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -66,7 +70,9 @@ def login(request):
             'id': user.id,
             'username': user.username,
             'email': user.email,
-            'role': user.role
+            'role': user.role,
+            'profile_picture':user.profile_picture.url if user.profile_picture else None,
+            'member_since':user.created_at
         },
         'access_token': access_token,
         'refresh_token': refresh_token
@@ -103,7 +109,24 @@ def block_user(request,id):
     return Response({"message":"The is no user."},status=400)
 
 
+# Api for logout
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def logout(request):
     return Response({"message":"User logged out successfully"},status=200)
+
+# Api for getting user information
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_info(request):
+    user = request.user
+    if user:
+        serializer = UserSerializer(user)
+        return Response(serializer.data,status=200)
+    return Response({"error":"User not found"},status=404)
+
+# Verifing token
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def verify_token(request):
+    return Response({"message": "Token is valid"}, status=200)

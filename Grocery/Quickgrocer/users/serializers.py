@@ -4,14 +4,23 @@ from django.contrib.auth.hashers import make_password
 import re
 
 class UserSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.SerializerMethodField()
+    member_since = serializers.DateTimeField(source='created_at', format="%Y-%m-%d", read_only=True)
     class Meta:
         model = Users
-        fields = '__all__'
+        # fields = '__all__'
+        fields = ['id', 'username', 'email', 'role', 'profile_picture', 'member_since']
         extra_kwargs = {'password':{'write_only':True}}
+
+    def get_profile_picture(self,obj):
+        if obj.profile_picture:
+            return obj.profile_picture.url
+        return None
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)
+    profile_picture = serializers.ImageField(required=False)
     class Meta:
         model = Users
         fields = '__all__'

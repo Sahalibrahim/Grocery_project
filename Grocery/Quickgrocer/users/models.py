@@ -18,9 +18,12 @@ class Users(AbstractBaseUser, PermissionsMixin):
     admin_blocked = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     def __str__(self):
         return f"{self.username}({self.role})"
+
+
