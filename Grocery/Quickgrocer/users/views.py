@@ -2,8 +2,8 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view,permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated,AllowAny
-from .serializers import UserRegisterSerializer,UserSerializer
-from .models import Users
+from .serializers import UserRegisterSerializer,UserSerializer,AddressSerializer
+from .models import Users,Address
 from rest_framework import status
 from .permissions import role_required
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -111,7 +111,7 @@ def block_user(request,id):
 
 # Api for logout
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def logout(request):
     return Response({"message":"User logged out successfully"},status=200)
 
@@ -130,3 +130,33 @@ def get_user_info(request):
 @permission_classes([IsAuthenticated])
 def verify_token(request):
     return Response({"message": "Token is valid"}, status=200)
+
+
+# User address handling
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_address(request):
+    serializer = AddressSerializer(data=request.data)
+    if serializer.is_valid():
+        if serializer.validated_data.get("is_default"):
+            Address.objects.filter(user=request.user,is_default=True).update(is_default=False)
+        serializer.save(user=request.user)
+        return Response(serializer.data,status=200)
+    return Response(serializer.errors,status=400)
+
+# List user address
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_address(request):
+    addresses = Address.objects.filter(user=request.user).order_by('-is_default','-created_at')
+    serializer = AddressSerializer(addresses,many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def enable_default(request,address_id):
+    address = Address.objects.get(id=address_id,user = request.user)
+    Address.objects.filter(is_default=True,user=request.user).update(is_default=False)
+    address.is_default=True
+    address.save()
+    return Response({"message":"Default address updated successfully"},status=200)

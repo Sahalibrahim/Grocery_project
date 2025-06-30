@@ -112,7 +112,7 @@ const UserProfile = () => {
       icon: <FaMapMarkerAlt />,
       title: "Addresses",
       subtitle: "Manage your delivery addresses",
-      action: () => navigate("/addresses"),
+      action: () => navigate("/address"),
     },
     {
       icon: <FaCog />,

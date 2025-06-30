@@ -14,6 +14,9 @@ urlpatterns = [
     path('get_user_info/',views.get_user_info,name='get_user_info'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('verify_token/', views.verify_token, name='verify_token'),
+    path('create_address/',views.create_address,name='create_address'),
+    path('list_address/',views.list_address,name='list_address'),
+    path('enable_default/<int:address_id>/',views.enable_default,name='enable_default'),
 ]
 
 if settings.DEBUG:

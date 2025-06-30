@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Users
+from .models import Users,Address
 from django.contrib.auth.hashers import make_password
 import re
 
@@ -58,3 +58,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         validate_data.pop('confirm_password')
         validate_data['password'] = make_password(validate_data['password'])
         return super().create(validate_data)
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = '__all__'
+        read_only_fields = ['user']

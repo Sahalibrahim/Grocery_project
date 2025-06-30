@@ -27,3 +27,19 @@ class Users(AbstractBaseUser, PermissionsMixin):
         return f"{self.username}({self.role})"
 
 
+class Address(models.Model):
+    user = models.ForeignKey('Users', on_delete=models.CASCADE, related_name='addresses')
+    full_name = models.CharField(max_length=100)  # Name of the receiver (can differ from account name)
+    phone_number = models.CharField(max_length=15)
+    address_line1 = models.CharField(max_length=255)
+    address_line2 = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=100, default='India')
+    is_default = models.BooleanField(default=False)  # Optional: mark default delivery address
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.full_name}, {self.city}"

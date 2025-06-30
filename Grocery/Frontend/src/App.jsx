@@ -6,6 +6,7 @@ import Registration from './Components/Registration'
 import UserProfile from './Components/UserProfile'
 import ProtectedRoute from './ProtectedRoute/ProtectedRoute'
 import PublicOnlyRoute from './ProtectedRoute/PublicOnlyRoute'
+import AddressPage from './Components/AddressPage'
 
 function App() {
 
@@ -37,6 +38,12 @@ function App() {
           <Registration/>
           </PublicOnlyRoute>
           }/>
+
+        <Route path='/address' element={
+          <ProtectedRoute>
+            <AddressPage/>
+          </ProtectedRoute>
+        }/>
 
       </Routes>
     </Router>

@@ -1,0 +1,373 @@
+.address-page {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #ffffff;
+  min-height: 100vh;
+}
+
+/* Theme colors */
+.text-danger {
+  color: #e40046 !important;
+}
+
+.btn-danger {
+  background-color: #e40046;
+  border-color: #e40046;
+}
+
+.btn-danger:hover {
+  background-color: #c8003d;
+  border-color: #c8003d;
+}
+
+/* Address Cards */
+.address-card {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.address-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: #e40046;
+}
+
+.default-address {
+  border-color: #e40046;
+  box-shadow: 0 4px 15px rgba(228, 0, 70, 0.15);
+}
+
+.default-address::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #e40046, #ff1744, #e40046);
+}
+
+.default-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #e40046;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.address-header h6 {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.address-details p {
+  color: #555;
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.address-details .text-muted {
+  color: #6c757d !important;
+}
+
+.address-actions .btn {
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.address-actions .btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Button variants */
+.btn-outline-success {
+  color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-outline-success:hover {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: #fff;
+}
+
+.btn-outline-primary {
+  color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-outline-primary:hover {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: #fff;
+}
+
+.btn-outline-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: #fff;
+}
+
+/* Modal styling */
+.modal-content {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  background-color: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modal-title {
+  color: #333;
+  font-weight: 600;
+}
+
+.modal-footer {
+  background-color: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Form styling */
+.form-control,
+.form-select {
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #e40046;
+  box-shadow: 0 0 0 0.2rem rgba(228, 0, 70, 0.15);
+}
+
+.form-label {
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.form-check-input:checked {
+  background-color: #e40046;
+  border-color: #e40046;
+}
+
+.form-check-input:focus {
+  border-color: #e40046;
+  box-shadow: 0 0 0 0.2rem rgba(228, 0, 70, 0.15);
+}
+
+/* Loading states */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Empty state */
+.text-center h4 {
+  color: #6c757d;
+}
+
+.text-center p {
+  color: #6c757d;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .address-page .container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .address-page .py-4 {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+
+  .address-card {
+    margin-bottom: 1rem;
+  }
+
+  .default-badge {
+    top: 10px;
+    right: 10px;
+    padding: 3px 8px;
+    font-size: 0.7rem;
+  }
+
+  .address-actions .btn {
+    font-size: 0.8rem;
+    padding: 0.375rem 0.5rem;
+  }
+
+  .modal-dialog {
+    margin: 1rem;
+  }
+
+  .btn-group {
+    flex-direction: column;
+  }
+
+  .btn-group .btn {
+    border-radius: 6px !important;
+    margin-bottom: 0.25rem;
+  }
+
+  .btn-group .btn:last-child {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .address-page h2 {
+    font-size: 1.5rem;
+  }
+
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .d-flex.justify-content-between .btn {
+    margin-top: 1rem;
+    align-self: stretch;
+  }
+
+  .modal-content {
+    margin: 0.5rem;
+  }
+}
+
+/* Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.address-card {
+  animation: slideInUp 0.4s ease forwards;
+}
+
+.address-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.address-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.address-card:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+/* Hover effects */
+.address-card .card-body {
+  position: relative;
+  z-index: 1;
+}
+
+/* Page header styling */
+.address-page h2 {
+  color: #333;
+  font-weight: 600;
+}
+
+.address-page .text-muted {
+  color: #6c757d !important;
+}
+
+/* Clean button styling */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Card body padding adjustment */
+.address-card .card-body {
+  padding: 1.25rem;
+}
+
+/* Improved spacing */
+.address-header {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.address-details {
+  padding: 0.75rem 0;
+}
+
+.address-actions {
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f3f4;
+}
+
+/* Back button styling */
+.back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dee2e6;
+  color: #6c757d;
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  background-color: #e40046;
+  border-color: #e40046;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.back-btn:focus {
+  box-shadow: 0 0 0 0.2rem rgba(228, 0, 70, 0.15);
+}
+
+/* Responsive back button */
+@media (max-width: 576px) {
+  .back-btn {
+    width: 35px;
+    height: 35px;
+    margin-right: 0.75rem !important;
+  }
+
+  .d-flex.align-items-center h2 {
+    font-size: 1.25rem;
+  }
+}
