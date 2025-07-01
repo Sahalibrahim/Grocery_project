@@ -152,6 +152,7 @@ def list_address(request):
     serializer = AddressSerializer(addresses,many=True)
     return Response(serializer.data)
 
+# Enable default feature
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def enable_default(request,address_id):
@@ -160,3 +161,42 @@ def enable_default(request,address_id):
     address.is_default=True
     address.save()
     return Response({"message":"Default address updated successfully"},status=200)
+
+# Edit address
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_address(request,address_id):
+    try:
+        address = Address.objects.get(id=address_id,user=request.user)
+    except Address.DoesNotExist:
+        return Response({"error":"Address not found"},status=404)
+    serializer = AddressSerializer(address,data=request.data,partial=True)
+    if serializer.is_valid():
+        if serializer.validated_data.get("is_default"):
+            Address.objects.filter(user=request.user,is_default=True).update(is_default=False)
+        serializer.save()
+        return Response(serializer.data,status=200)
+    return Response(serializer.errors,status=400)
+
+# Delete the address
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_address(request,address_id):
+    try:
+        address = Address.objects.get(id=address_id,user=request.user)
+    except Address.DoesNotExist:
+        return Response({"error":"This address does not exists"},status=404)
+    address.delete()
+    return Response({"message":"address deleted successfully"},status=200)
+
+# Edit user
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def edit_user(request):
+    user = request.user
+    data = request.data
+
+    user.username = data.get('username')
+    user.email = data.get('email')
+    user.save()
+    return Response({"message":"User updated successfully"},status=200)

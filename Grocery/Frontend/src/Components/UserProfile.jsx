@@ -94,6 +94,22 @@ const UserProfile = () => {
     }
   }
 
+  const handleEdit = async () => {
+    try{
+      const res = await axiosInstance.put('http://localhost:8000/api/users/edit_user/',user,{
+        headers:{
+          Authorization:`Bearer ${localStorage.getItem('access_token')}`
+        }
+      })
+      if(res.status===200){
+        setIsEditing(false)
+        console.log("user edited successfully")
+      }
+    }catch(error){
+      console.error(error)
+    }
+  }
+
   const menuItems = [
     {
       icon: <FaShoppingBag />,
@@ -328,7 +344,7 @@ const UserProfile = () => {
                       onChange={(e) => setUser((prev) => ({ ...prev, email: e.target.value }))}
                     />
                   </div>
-                  <div className="mb-3">
+                  {/* <div className="mb-3">
                     <label className="form-label text-black">Phone</label>
                     <input
                       type="tel"
@@ -345,7 +361,7 @@ const UserProfile = () => {
                       value={user.address}
                       onChange={(e) => setUser((prev) => ({ ...prev, address: e.target.value }))}
                     ></textarea>
-                  </div>
+                  </div> */}
                 </form>
               </div>
               <div className="modal-footer border-0">
@@ -355,10 +371,7 @@ const UserProfile = () => {
                 <button
                   type="button"
                   className="btn btn-danger"
-                  onClick={() => {
-                    // Save user data here
-                    setIsEditing(false)
-                  }}
+                  onClick={() => {handleEdit()}}
                 >
                   Save Changes
                 </button>

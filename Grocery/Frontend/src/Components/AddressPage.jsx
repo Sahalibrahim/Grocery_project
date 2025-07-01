@@ -151,7 +151,8 @@ const AddressPage = () => {
 
   const handleEditAddress = (address) => {
     setEditingAddress(address)
-    setFormData(address)
+    // setFormData(address)
+    reset(address)
     setShowEditModal(true)
   }
 
@@ -161,18 +162,6 @@ const AddressPage = () => {
   }
 
   const handleSetDefault = async (addressId) => {
-    // setIsLoading(true)
-    // try {
-    //   const updatedAddresses = addresses.map((addr) => ({
-    //     ...addr,
-    //     is_default: addr.id === addressId,
-    //   }))
-    //   setAddresses(updatedAddresses)
-    // } catch (error) {
-    //   console.error("Error setting default address:", error)
-    // } finally {
-    //   setIsLoading(false)
-    // }
     try {
       const res = await axiosInstance.post(`http://localhost:8000/api/users/enable_default/${addressId}/`, {}, {
         headers: {
@@ -211,20 +200,22 @@ const AddressPage = () => {
     }
   }
 
-  const handleSubmitEdit = async (e) => {
-    // e.preventDefault()
+  const handleSubmitEdit = async (data) => {
+    if (!editingAddress) return
     setIsLoading(true)
 
     try {
-      if (formData.is_default) {
-        setAddresses((prev) => prev.map((addr) => ({ ...addr, is_default: addr.id !== editingAddress.id })))
+      const res = await axiosInstance.put(`http://localhost:8000/api/users/update_address/${editingAddress.id}/`, data, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
+        }
+      })
+      if (res.status === 200) {
+        fetchAddresses()
+        setShowEditModal(false)
+        setEditingAddress(null)
+        reset()
       }
-
-      setAddresses((prev) => prev.map((addr) => (addr.id === editingAddress.id ? { ...formData, id: addr.id } : addr)))
-
-      setShowEditModal(false)
-      setEditingAddress(null)
-      resetForm()
     } catch (error) {
       console.error("Error updating address:", error)
     } finally {
@@ -235,9 +226,15 @@ const AddressPage = () => {
   const handleConfirmDelete = async () => {
     setIsLoading(true)
     try {
-      setAddresses((prev) => prev.filter((addr) => addr.id !== selectedAddress.id))
-      setShowDeleteModal(false)
-      setSelectedAddress(null)
+      const res = await axiosInstance.delete(`http://localhost:8000/api/users/delete_address/${selectedAddress.id}/`,{
+        headers:{
+          Authorization:`Bearer ${localStorage.getItem('access_token')}`
+        }
+      })
+      if(res.status===200){
+        fetchAddresses()
+        setShowDeleteModal(false)
+      }
     } catch (error) {
       console.error("Error deleting address:", error)
     } finally {
@@ -257,155 +254,6 @@ const AddressPage = () => {
               <button type="button" className="btn-close" onClick={onHide}></button>
             </div>
             <div className="modal-body">
-              {/* <form onSubmit={onSubmit}>
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      <FaUser className="me-2 text-danger" />
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="full_name"
-                      value={formData.full_name}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="Enter full name"
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      <FaPhone className="me-2 text-danger" />
-                      Phone Number *
-                    </label>
-                    <input
-                      type="tel"
-                      className="form-control"
-                      name="phone_number"
-                      value={formData.phone_number}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="+91 XXXXXXXXXX"
-                    />
-                  </div>
-                  <div className="col-12">
-                    <label className="form-label">
-                      <FaHome className="me-2 text-danger" />
-                      Address Line 1 *
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="address_line1"
-                      value={formData.address_line1}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="House/Flat/Office No, Building Name, Street"
-                    />
-                  </div>
-                  <div className="col-12">
-                    <label className="form-label">
-                      <FaBuilding className="me-2 text-danger" />
-                      Address Line 2
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="address_line2"
-                      value={formData.address_line2}
-                      onChange={handleInputChange}
-                      placeholder="Landmark, Area (Optional)"
-                    />
-                  </div>
-                  <div className="col-md-4">
-                    <label className="form-label">City *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="Enter city"
-                    />
-                  </div>
-                  <div className="col-md-4">
-                    <label className="form-label">State *</label>
-                    <select
-                      className="form-select"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleInputChange}
-                      required
-                    >
-                      <option value="">Select State</option>
-                      {indianStates.map((state) => (
-                        <option key={state} value={state}>
-                          {state}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="col-md-4">
-                    <label className="form-label">Postal Code *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="postal_code"
-                      value={formData.postal_code}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="XXXXXX"
-                      maxLength="6"
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Country</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="country"
-                      value={formData.country}
-                      onChange={handleInputChange}
-                      readOnly
-                    />
-                  </div>
-                  <div className="col-md-6 d-flex align-items-end">
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        name="is_default"
-                        id="is_default"
-                        checked={formData.is_default}
-                        onChange={handleInputChange}
-                      />
-                      <label className="form-check-label" htmlFor="is_default">
-                        <FaStar className="me-2 text-warning" />
-                        Set as default address
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <div className="modal-footer border-0 mt-4">
-                  <button type="button" className="btn btn-secondary" onClick={onHide} disabled={isLoading}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-danger" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2"></span>
-                        {isEdit ? "Updating..." : "Adding..."}
-                      </>
-                    ) : isEdit ? (
-                      "Update Address"
-                    ) : (
-                      "Add Address"
-                    )}
-                  </button>
-                </div>
-              </form> */}
               <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="row g-3">
                   <div className="col-md-6">
@@ -515,8 +363,11 @@ const AddressPage = () => {
                   <button type="submit" className="btn btn-danger" disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
-                        <span className="spinner-border spinner-border-sm me-2"></span> Adding...
+                        <span className="spinner-border spinner-border-sm me-2"></span>
+                        {editingAddress ? "Updating..." : "Adding..."}
                       </>
+                    ) : editingAddress ? (
+                      "Update Address"
                     ) : (
                       "Add Address"
                     )}

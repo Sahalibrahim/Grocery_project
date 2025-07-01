@@ -17,6 +17,9 @@ urlpatterns = [
     path('create_address/',views.create_address,name='create_address'),
     path('list_address/',views.list_address,name='list_address'),
     path('enable_default/<int:address_id>/',views.enable_default,name='enable_default'),
+    path('update_address/<int:address_id>/',views.update_address,name='update_address'),
+    path('delete_address/<int:address_id>/',views.delete_address,name='delete_address'),
+    path('edit_user/',views.edit_user,name='edit_user'),
 ]
 
 if settings.DEBUG:
