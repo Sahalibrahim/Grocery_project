@@ -37,31 +37,32 @@ const UserProfile = () => {
     // You can fetch user data here
   }, [navigate])
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const res = await axiosInstance.get('http://localhost:8000/api/users/get_user_info/', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`
-          }
-        })
-        if(res.status===200){
-          const {username,email,role,profile_picture,member_since}=res.data
-          setUser({
-            'username':username,
-            'email':email,
-            'role':role,
-            'profile_picture': `http://localhost:8000${profile_picture}`,
-            'member_since':member_since
-          })
-          console.log(res.data)
+
+  const fetchUserInfo = async () => {
+    try {
+      const res = await axiosInstance.get('http://localhost:8000/api/users/get_user_info/', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
         }
-      }catch(error){
-        console.error(error)
+      })
+      if (res.status === 200) {
+        const { username, email, role, profile_picture, member_since } = res.data
+        setUser({
+          'username': username,
+          'email': email,
+          'role': role,
+          'profile_picture': `http://localhost:8000${profile_picture}`,
+          'member_since': member_since
+        })
       }
+    } catch (error) {
+      console.error(error)
     }
+  }
+
+  useEffect(() => {
     fetchUserInfo()
-  },[])
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -80,32 +81,39 @@ const UserProfile = () => {
     }
   }
 
-  const handleProfilePictureChange = (e) => {
+  const handleProfilePictureChange = async (e) => {
     const file = e.target.files[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setUser((prev) => ({
-          ...prev,
-          profilePicture: e.target.result,
-        }))
+    if (!file) return
+    const formData = new FormData()
+    formData.append('profile_picture', file)
+    try {
+      const res = await axiosInstance.put('http://localhost:8000/api/users/update_profilepic/', formData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      if (res.status === 200) {
+        fetchUserInfo()
+        console.log("successfully updated profile picture")
       }
-      reader.readAsDataURL(file)
+    }catch(error){
+      console.log("error",error)
     }
   }
 
   const handleEdit = async () => {
-    try{
-      const res = await axiosInstance.put('http://localhost:8000/api/users/edit_user/',user,{
-        headers:{
-          Authorization:`Bearer ${localStorage.getItem('access_token')}`
+    try {
+      const res = await axiosInstance.put('http://localhost:8000/api/users/edit_user/', user, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
         }
       })
-      if(res.status===200){
+      if (res.status === 200) {
         setIsEditing(false)
         console.log("user edited successfully")
       }
-    }catch(error){
+    } catch (error) {
       console.error(error)
     }
   }
@@ -344,24 +352,6 @@ const UserProfile = () => {
                       onChange={(e) => setUser((prev) => ({ ...prev, email: e.target.value }))}
                     />
                   </div>
-                  {/* <div className="mb-3">
-                    <label className="form-label text-black">Phone</label>
-                    <input
-                      type="tel"
-                      className="form-control"
-                      value={user.phone}
-                      onChange={(e) => setUser((prev) => ({ ...prev, phone: e.target.value }))}
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label text-black">Address</label>
-                    <textarea
-                      className="form-control"
-                      rows="3"
-                      value={user.address}
-                      onChange={(e) => setUser((prev) => ({ ...prev, address: e.target.value }))}
-                    ></textarea>
-                  </div> */}
                 </form>
               </div>
               <div className="modal-footer border-0">
@@ -371,7 +361,7 @@ const UserProfile = () => {
                 <button
                   type="button"
                   className="btn btn-danger"
-                  onClick={() => {handleEdit()}}
+                  onClick={() => { handleEdit() }}
                 >
                   Save Changes
                 </button>

@@ -255,9 +255,8 @@ const LoginPage = () => {
                   {/* Message Display */}
                   {message.text && (
                     <div
-                      className={`alert alert-${
-                        message.type === "error" ? "danger" : message.type === "success" ? "success" : "info"
-                      } alert-dismissible fade show`}
+                      className={`alert alert-${message.type === "error" ? "danger" : message.type === "success" ? "success" : "info"
+                        } alert-dismissible fade show`}
                       role="alert"
                     >
                       <div className="d-flex align-items-center">

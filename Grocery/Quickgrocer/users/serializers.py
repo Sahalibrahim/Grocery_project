@@ -64,3 +64,9 @@ class AddressSerializer(serializers.ModelSerializer):
         model = Address
         fields = '__all__'
         read_only_fields = ['user']
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.ImageField(required=False)
+    class Meta:
+        model = Users
+        fields = ['profile_picture']

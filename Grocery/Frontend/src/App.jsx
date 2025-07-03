@@ -7,6 +7,7 @@ import UserProfile from './Components/UserProfile'
 import ProtectedRoute from './ProtectedRoute/ProtectedRoute'
 import PublicOnlyRoute from './ProtectedRoute/PublicOnlyRoute'
 import AddressPage from './Components/AddressPage'
+import SellerPage from './Components/SellerPage'
 
 function App() {
 
@@ -42,6 +43,12 @@ function App() {
         <Route path='/address' element={
           <ProtectedRoute>
             <AddressPage/>
+          </ProtectedRoute>
+        }/>
+
+        <Route path='/sellerpage' element={
+          <ProtectedRoute>
+            <SellerPage/>
           </ProtectedRoute>
         }/>
 

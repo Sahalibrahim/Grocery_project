@@ -20,6 +20,7 @@ urlpatterns = [
     path('update_address/<int:address_id>/',views.update_address,name='update_address'),
     path('delete_address/<int:address_id>/',views.delete_address,name='delete_address'),
     path('edit_user/',views.edit_user,name='edit_user'),
+    path('update_profilepic/',views.update_profilepic,name='update_profilepic'),
 ]
 
 if settings.DEBUG:
