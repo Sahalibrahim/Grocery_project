@@ -17,47 +17,33 @@ import {
   FaChartLine,
 } from "react-icons/fa"
 import "../Style/SellerPage.css"
+import { useForm } from "react-hook-form"
+import axiosInstance from '../Utils/AxiosInstance'
+import { toast, ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
+
 
 const SellerPage = () => {
   const [activeTab, setActiveTab] = useState("dashboard")
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Organic Apples",
-      category: "Fruits",
-      price: 120,
-      discount_price: 100,
-      stock: 0,
-      description: "Fresh organic apples from Kashmir",
-      image: "/placeholder.svg?height=200&width=200",
-      status: "active",
-      created_at: "2024-01-15",
-    },
-    {
-      id: 2,
-      name: "Brown Rice",
-      category: "Grains",
-      price: 80,
-      discount_price: null,
-      stock: 25,
-      description: "Premium quality brown rice",
-      image: "/placeholder.svg?height=200&width=200",
-      status: "active",
-      created_at: "2024-01-10",
-    },
-    {
-      id: 3,
-      name: "Olive Oil",
-      category: "Oils",
-      price: 450,
-      discount_price: 400,
-      stock: 5,
-      description: "Extra virgin olive oil",
-      image: "/placeholder.svg?height=200&width=200",
-      status: "active",
-      created_at: "2024-01-08",
-    },
-  ])
+  const [products, setProducts] = useState([])
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    control // if you're using Controller for complex inputs
+  } = useForm({
+    defaultValues: {
+      name: '',
+      category: '',
+      price: 0,
+      discount_price: 0,
+      quantity: 0,
+      description: '',
+      status: 'active'
+    }
+  });
 
   const [orders, setOrders] = useState([
     {
@@ -105,6 +91,7 @@ const SellerPage = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(6)
   const [notifications, setNotifications] = useState([])
+  const [successMessage, setSuccessMessage] = useState("")
 
   const [productForm, setProductForm] = useState({
     name: "",
@@ -119,7 +106,7 @@ const SellerPage = () => {
 
   const navigate = useNavigate()
 
-  const categories = ["Fruits", "Vegetables", "Grains", "Dairy", "Oils", "Spices", "Beverages", "Snacks"]
+  const [categories, setCategories] = useState([])
 
   useEffect(() => {
     // Check authentication
@@ -131,6 +118,58 @@ const SellerPage = () => {
     // Check for out of stock products
     checkLowStock()
   }, [navigate, products])
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axiosInstance.get('http://localhost:8000/api/products/list_category/', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`
+          }
+        })
+        setCategories(res.data)  // assuming response is like [{id: 1, name: 'Fruits'}, ...]
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    fetchCategories()
+  }, [])
+
+  const fetch_seller_products = async () => {
+    try {
+      const res = await axiosInstance.get('http://localhost:8000/api/products/list_all_products/', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
+        }
+      })
+      if (res.status === 200 && Array.isArray(res.data)) {
+        const formattedProducts = res.data.map(product => ({
+          id: product.id,
+          image: `http://localhost:8000${product.image}`,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          discount_price: product.discount_price,
+          quantity: product.quantity,
+          status: product.status,
+          created_at: product.created_at,
+          updated_at: product.updated_at,
+          category: product.category,
+          category_name: product.category_name,
+          seller: product.seller,
+        }));
+
+        setProducts(formattedProducts);
+        console.log("Products:", formattedProducts);
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    fetch_seller_products()
+  }, [])
 
   const checkLowStock = () => {
     const outOfStock = products.filter((product) => product.stock === 0)
@@ -183,14 +222,14 @@ const SellerPage = () => {
 
   const handleEditProduct = (product) => {
     setEditingProduct(product)
-    setProductForm({
+    reset({
       name: product.name,
       category: product.category,
-      price: product.price.toString(),
-      discount_price: product.discount_price?.toString() || "",
-      stock: product.stock.toString(),
+      price: product.price,
+      discount_price: product.discount_price || "",
+      quantity: product.quantity,
       description: product.description,
-      image: null,
+      image: product.image,
       status: product.status,
     })
     setShowProductModal(true)
@@ -202,43 +241,62 @@ const SellerPage = () => {
     }
   }
 
-  const handleProductSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
+  const onSubmit = async (data) => {
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("category", data.category);
+    formData.append("price", parseFloat(data.price));
+    formData.append("discount_price", data.discount_price || "");
+    formData.append("quantity", parseInt(data.quantity));
+    formData.append("description", data.description || "");
+    formData.append("status", data.status || "active");
+
+    if (data.image && data.image[0]) {
+      formData.append("image", data.image[0]);
+    }
 
     try {
-      const productData = {
-        ...productForm,
-        price: Number.parseFloat(productForm.price),
-        discount_price: productForm.discount_price ? Number.parseFloat(productForm.discount_price) : null,
-        stock: Number.parseInt(productForm.stock),
-        image: productForm.image ? URL.createObjectURL(productForm.image) : "/placeholder.svg?height=200&width=200",
-      }
+      let res;
 
       if (editingProduct) {
-        setProducts((prev) =>
-          prev.map((product) =>
-            product.id === editingProduct.id
-              ? { ...productData, id: product.id, created_at: product.created_at }
-              : product,
-          ),
-        )
+        // PUT request to update the product
+        res = await axiosInstance.put(
+          `http://localhost:8000/api/products/update_product/${editingProduct.id}/`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
       } else {
-        setProducts((prev) => [
-          ...prev,
-          { ...productData, id: Date.now(), created_at: new Date().toISOString().split("T")[0] },
-        ])
+        // POST request to create new product
+        res = await axiosInstance.post(
+          "http://localhost:8000/api/products/add_product/",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
       }
 
-      setShowProductModal(false)
-      resetProductForm()
-      setEditingProduct(null)
+      if (res.status === 200 || res.status === 201) {
+        toast.success(`🎉 Product ${editingProduct ? "updated" : "added"} successfully!`);
+        reset();
+        setShowProductModal(false);
+        setEditingProduct(null);
+        fetch_seller_products();
+      }
     } catch (error) {
-      console.error("Error saving product:", error)
-    } finally {
-      setIsLoading(false)
+      console.error("Error saving product:", error);
+      toast.error(`❌ Failed to ${editingProduct ? "update" : "add"} product.`);
     }
-  }
+  };
+
 
   const handleUpdateStock = (productId, newStock) => {
     setProducts((prev) =>
@@ -288,117 +346,122 @@ const SellerPage = () => {
               <button type="button" className="btn-close" onClick={() => setShowProductModal(false)}></button>
             </div>
             <div className="modal-body">
-              <form onSubmit={handleProductSubmit}>
+              <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="row g-3">
+                  <ToastContainer position="top-right" autoClose={3000} />
                   <div className="col-md-6">
                     <label className="form-label">Product Name *</label>
                     <input
                       type="text"
-                      className="form-control"
-                      name="name"
-                      value={productForm.name}
-                      onChange={handleProductInputChange}
-                      required
+                      className={`form-control ${errors.name ? 'is-invalid' : ''}`}
+                      {...register('name', { required: 'Product name is required' })}
                     />
+                    {errors.name && <div className="invalid-feedback">{errors.name.message}</div>}
                   </div>
+
                   <div className="col-md-6">
                     <label className="form-label">Category *</label>
                     <select
-                      className="form-select"
-                      name="category"
-                      value={productForm.category}
-                      onChange={handleProductInputChange}
-                      required
+                      className={`form-select ${errors.category ? 'is-invalid' : ''}`}
+                      {...register('category', { required: 'Category is required' })}
                     >
                       <option value="">Select Category</option>
                       {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
                       ))}
                     </select>
+                    {errors.category && <div className="invalid-feedback">{errors.category.message}</div>}
                   </div>
+
                   <div className="col-md-4">
                     <label className="form-label">Price (₹) *</label>
                     <input
                       type="number"
-                      className="form-control"
-                      name="price"
-                      value={productForm.price}
-                      onChange={handleProductInputChange}
+                      className={`form-control ${errors.price ? 'is-invalid' : ''}`}
+                      {...register('price', {
+                        required: 'Price is required',
+                        min: { value: 0, message: 'Price must be positive' }
+                      })}
                       min="0"
                       step="0.01"
-                      required
                     />
+                    {errors.price && <div className="invalid-feedback">{errors.price.message}</div>}
                   </div>
+
                   <div className="col-md-4">
                     <label className="form-label">Discount Price (₹)</label>
                     <input
                       type="number"
                       className="form-control"
-                      name="discount_price"
-                      value={productForm.discount_price}
-                      onChange={handleProductInputChange}
+                      {...register('discount_price', {
+                        min: { value: 0, message: 'Discount price must be positive' }
+                      })}
                       min="0"
                       step="0.01"
                     />
+                    {errors.discount_price && <div className="invalid-feedback">{errors.discount_price.message}</div>}
                   </div>
+
                   <div className="col-md-4">
                     <label className="form-label">Stock Quantity *</label>
                     <input
                       type="number"
-                      className="form-control"
-                      name="stock"
-                      value={productForm.stock}
-                      onChange={handleProductInputChange}
+                      className={`form-control ${errors.quantity ? 'is-invalid' : ''}`}
+                      {...register('quantity', {
+                        required: 'Quantity is required',
+                        min: { value: 0, message: 'Quantity must be positive' }
+                      })}
                       min="0"
-                      required
                     />
+                    {errors.quantity && <div className="invalid-feedback">{errors.quantity.message}</div>}
                   </div>
+
                   <div className="col-12">
                     <label className="form-label">Description</label>
                     <textarea
                       className="form-control"
-                      name="description"
-                      value={productForm.description}
-                      onChange={handleProductInputChange}
+                      {...register('description')}
                       rows="3"
                     ></textarea>
                   </div>
+
                   <div className="col-md-6">
                     <label className="form-label">Product Image</label>
                     <input
                       type="file"
                       className="form-control"
-                      name="image"
-                      onChange={handleProductInputChange}
+                      {...register('image')}
                       accept="image/*"
                     />
                   </div>
+
                   <div className="col-md-6">
                     <label className="form-label">Status</label>
                     <select
                       className="form-select"
-                      name="status"
-                      value={productForm.status}
-                      onChange={handleProductInputChange}
+                      {...register('status')}
                     >
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
                     </select>
                   </div>
                 </div>
+
                 <div className="modal-footer border-0 mt-4">
                   <button
                     type="button"
                     className="btn btn-secondary"
                     onClick={() => setShowProductModal(false)}
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-danger" disabled={isLoading}>
-                    {isLoading ? (
+                  <button
+                    type="submit"
+                    className="btn btn-danger"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
                       <>
                         <span className="spinner-border spinner-border-sm me-2"></span>
                         {editingProduct ? "Updating..." : "Adding..."}
@@ -697,8 +760,8 @@ const SellerPage = () => {
                 >
                   <option value="">All Categories</option>
                   {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
                     </option>
                   ))}
                 </select>
@@ -720,12 +783,12 @@ const SellerPage = () => {
                         alt={product.name}
                         style={{ height: "200px", objectFit: "cover" }}
                       />
-                      {product.stock === 0 && (
+                      {product.quantity === 0 && (
                         <div className="position-absolute top-0 end-0 m-2">
                           <span className="badge bg-danger">Out of Stock</span>
                         </div>
                       )}
-                      {product.stock > 0 && product.stock <= 5 && (
+                      {product.quantity > 0 && product.quantity <= 5 && (
                         <div className="position-absolute top-0 end-0 m-2">
                           <span className="badge bg-warning">Low Stock</span>
                         </div>
@@ -733,7 +796,7 @@ const SellerPage = () => {
                     </div>
                     <div className="card-body">
                       <h6 className="card-title">{product.name}</h6>
-                      <p className="text-muted small mb-2">{product.category}</p>
+                      <p className="text-muted small mb-2">{product.category_name}</p>
                       <div className="d-flex justify-content-between align-items-center mb-2">
                         <div>
                           {product.discount_price ? (
@@ -746,21 +809,21 @@ const SellerPage = () => {
                           )}
                         </div>
                         <span
-                          className={`badge ${product.stock > 5 ? "bg-success" : product.stock > 0 ? "bg-warning" : "bg-danger"}`}
+                          className={`badge ${product.quantity > 5 ? "bg-success" : product.quantity > 0 ? "bg-warning" : "bg-danger"}`}
                         >
-                          Stock: {product.stock}
+                          Stock: {product.quantity}
                         </span>
                       </div>
-                      <div className="mb-3">
+                      {/* <div className="mb-3">
                         <label className="form-label small">Update Stock:</label>
                         <input
                           type="number"
                           className="form-control form-control-sm"
-                          value={product.stock}
+                          value={product.quantity}
                           onChange={(e) => handleUpdateStock(product.id, e.target.value)}
                           min="0"
                         />
-                      </div>
+                      </div> */}
                       <div className="btn-group w-100" role="group">
                         <button className="btn btn-outline-primary btn-sm" onClick={() => handleEditProduct(product)}>
                           <FaEdit />

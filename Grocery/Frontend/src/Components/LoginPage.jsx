@@ -1,109 +1,3 @@
-// import React, { useState } from 'react';
-// import { FaGoogle, FaShoppingBasket } from 'react-icons/fa';
-// import '../Style/Login.css'
-// import axios from 'axios';
-// import { useNavigate } from 'react-router-dom';
-// import axiosInstance from '../Utils/AxiosInstance';
-
-// const LoginPage = () => {
-
-//     const [email, setEmail] = useState(null)
-//     const [password, setPassword] = useState(null)
-//     const navigate = useNavigate()
-
-//     const handleSubmit = async (e) => {
-//         e.preventDefault();
-//         try {
-//             const res = await axiosInstance.post('http://localhost:8000/api/users/login/', {
-//                 email,
-//                 password
-//             });
-
-//             if (res.status === 200) {
-//                 localStorage.setItem('access_token', res.data.access_token)
-//                 localStorage.setItem('refresh_token', res.data.refresh_token)
-//                 navigate('/home')
-//             }
-//         } catch (error) {
-//             console.error('Login failed:', error.response?.data || error.message);
-//         }
-//     }
-
-//     return (
-//         <>
-//             <section className="login" >
-//                 <div className="container ">
-//                     <div className="row justify-content-center">
-//                         <div className=" col-md-6 col-lg-5">
-//                             <div className="shadow-lg login-glass" >
-//                                 <div className="card-body p-5 login-glass">
-//                                     <form onSubmit={handleSubmit}>
-//                                         <div className="mb-3">
-//                                             <label htmlFor="email" className="form-label">Email address</label>
-//                                             <input
-//                                                 type="email"
-//                                                 className="form-control"
-//                                                 id="email"
-//                                                 placeholder="Enter your email"
-//                                                 onChange={(e) => { setEmail(e.target.value) }}
-//                                                 required
-//                                             />
-//                                         </div>
-//                                         <div className="mb-3">
-//                                             <label htmlFor="password" className="form-label">Password</label>
-//                                             <input
-//                                                 type="password"
-//                                                 className="form-control"
-//                                                 id="password"
-//                                                 placeholder="Enter your password"
-//                                                 onChange={(e) => { setPassword(e.target.value) }}
-//                                                 required
-//                                             />
-//                                         </div>
-//                                         <div className="d-flex justify-content-between mb-4">
-//                                             <div className="form-check">
-//                                                 <input className="form-check-input" type="checkbox" id="remember" />
-//                                                 <label className="form-check-label" htmlFor="remember">
-//                                                     Remember me
-//                                                 </label>
-//                                             </div>
-//                                             <a href="#forgot-password" >Forgot password?</a>
-//                                         </div>
-//                                         <button type="submit" className="btn btn-outline-dark w-100 py-2" >
-//                                             Sign in
-//                                         </button>
-//                                     </form>
-//                                     <br></br>
-
-//                                     <button className="btn btn-outline-danger w-100 py-2 mb-3" >
-//                                         <FaGoogle className="me-2" />
-//                                         Sign in with Google
-//                                     </button>
-
-//                                     <div className="text-center">
-//                                         <span className="text-muted small">Don't have an account? </span>
-//                                         <button
-//                                             type="button"
-//                                             className="btn btn-link p-0 text-decoration-none small fw-semibold"
-//                                             onClick={() => navigate("/registration")}
-//                                         >
-//                                             Sign up
-//                                         </button>
-//                                     </div>
-//                                 </div>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </section>
-//         </>
-//     )
-// }
-
-
-// export default LoginPage;
-
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -111,6 +5,7 @@ import { FaGoogle, FaShoppingBasket, FaEye, FaEyeSlash, FaSpinner } from "react-
 import { useNavigate, useLocation } from "react-router-dom"
 import axios from "axios"
 import "../Style/Login.css"
+import axiosInstance from "../Utils/AxiosInstance"
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -178,7 +73,7 @@ const LoginPage = () => {
     setMessage({ type: "", text: "" })
 
     try {
-      const res = await axios.post("http://localhost:8000/api/users/login/", {
+      const res = await axiosInstance.post("http://localhost:8000/api/users/login/", {
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
       })
@@ -198,8 +93,22 @@ const LoginPage = () => {
         }
 
         // Redirect after a short delay to show success message
+        // setTimeout(() => {
+        //   navigate("/home")
+        // }, 1500)
+        // ✅ Get role from backend response
+        const role = res.data.user.role
+
+        // Redirect based on role
         setTimeout(() => {
-          navigate("/home")
+          if (role === 'user') {
+            navigate("/home")
+          } else if (role === 'seller') {
+            navigate("/sellerpage")
+          } else {
+            // Optional: fallback
+            navigate("/")
+          }
         }, 1500)
       }
     } catch (error) {

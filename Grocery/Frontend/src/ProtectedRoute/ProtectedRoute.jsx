@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import axios from '../Utils/AxiosInstance'; // Make sure to use your configured Axios instance
+import axiosInstance from '../Utils/AxiosInstance';
 
 const ProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null); // null = loading, true/false = auth status
@@ -9,7 +10,7 @@ const ProtectedRoute = ({ children }) => {
   const checkAuth = async () => {
     try {
       // Check access token validity
-      const res = await axios.get('http://localhost:8000/api/users/verify_token', {
+      const res = await axiosInstance.get('http://localhost:8000/api/users/verify_token', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
         },
@@ -21,7 +22,7 @@ const ProtectedRoute = ({ children }) => {
     } catch (err) {
       // Try refreshing the access token
       try {
-        const refreshRes = await axios.post('http://localhost:8000/api/users/refresh/', null, {
+        const refreshRes = await axiosInstance.post('http://localhost:8000/api/users/refresh/', null, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('refresh_token')}`,
           },

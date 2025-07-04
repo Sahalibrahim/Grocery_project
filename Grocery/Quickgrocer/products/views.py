@@ -31,11 +31,13 @@ def list_category(request):
 @api_view(['POST'])
 @role_required(allowed_roles=['seller','admin'])
 def add_product(request):
+    print(request.data)
+    print(request.FILES)
     seller = request.user
     serializer = ProductSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save(seller=seller)
-        return Response(serializer.data,status=200)
+        return Response(serializer.data,status=201)
     return Response(serializer.errors,status=400)
 
 # Listing all products(for admin)
@@ -103,3 +105,17 @@ def remove_from_cart(request,cart_id):
         return Response({"Error":"There is no such product"},status=404)
     product.delete()
     return Response({"message":"product deleted successfully."},status=200)
+
+# Update Product
+@api_view(['PUT'])
+@role_required(allowed_roles=['seller'])
+def update_product(request,product_id):
+    try:
+        product = Product.objects.get(id=product_id,seller=request.user)
+    except Product.DoesNotExist:
+        return Response({"error":"The product doesn't exists."},status=404)
+    serializer = ProductSerializer(product,data=request.data,partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data,status=200)
+    return Response(serializer.errors,status=400)
