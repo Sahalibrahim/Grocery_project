@@ -21,11 +21,16 @@ import { useForm } from "react-hook-form"
 import axiosInstance from '../Utils/AxiosInstance'
 import { toast, ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
+import { Modal, Button } from "react-bootstrap";
 
 
 const SellerPage = () => {
   const [activeTab, setActiveTab] = useState("dashboard")
   const [products, setProducts] = useState([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   const {
     register,
@@ -88,21 +93,9 @@ const SellerPage = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(6)
   const [notifications, setNotifications] = useState([])
   const [successMessage, setSuccessMessage] = useState("")
-
-  const [productForm, setProductForm] = useState({
-    name: "",
-    category: "",
-    price: "",
-    discount_price: "",
-    stock: "",
-    description: "",
-    image: null,
-    status: "active",
-  })
 
   const navigate = useNavigate()
 
@@ -135,17 +128,25 @@ const SellerPage = () => {
     fetchCategories()
   }, [])
 
-  const fetch_seller_products = async () => {
+
+
+  const fetch_seller_products = async (page = 1) => {
     try {
-      const res = await axiosInstance.get('http://localhost:8000/api/products/list_all_products/', {
+      const queryParams = new URLSearchParams();
+      queryParams.append("page", page);
+      if (searchTerm) queryParams.append("search", searchTerm);
+      if (filterCategory) queryParams.append("category", filterCategory);
+
+      const res = await axiosInstance.get(`http://localhost:8000/api/products/list_all_products/?${queryParams.toString()}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`
         }
-      })
-      if (res.status === 200 && Array.isArray(res.data)) {
-        const formattedProducts = res.data.map(product => ({
+      });
+
+      if (res.status === 200 && res.data.results) {
+        const formattedProducts = res.data.results.map(product => ({
           id: product.id,
-          image: `http://localhost:8000${product.image}`,
+          image: product.image ? `http://localhost:8000${product.image}` : "/placeholder.svg",
           name: product.name,
           description: product.description,
           price: product.price,
@@ -160,20 +161,21 @@ const SellerPage = () => {
         }));
 
         setProducts(formattedProducts);
-        console.log("Products:", formattedProducts);
+        setTotalPages(Math.ceil(res.data.count / 6));  // or use page_size if dynamic
+        setCurrentPage(page);
       }
     } catch (error) {
-      console.log(error)
+      console.error("Error fetching products:", error);
     }
-  }
+  };
 
   useEffect(() => {
-    fetch_seller_products()
-  }, [])
+    fetch_seller_products(currentPage)
+  }, [currentPage, searchTerm, filterCategory])
 
   const checkLowStock = () => {
-    const outOfStock = products.filter((product) => product.stock === 0)
-    const lowStock = products.filter((product) => product.stock > 0 && product.stock <= 5)
+    const outOfStock = products.filter((product) => product.quantity === 0)
+    const lowStock = products.filter((product) => product.quantity > 0 && product.quantity <= 5)
 
     const newNotifications = [
       ...outOfStock.map((product) => ({
@@ -193,18 +195,6 @@ const SellerPage = () => {
     setNotifications(newNotifications)
   }
 
-  const resetProductForm = () => {
-    setProductForm({
-      name: "",
-      category: "",
-      price: "",
-      discount_price: "",
-      stock: "",
-      description: "",
-      image: null,
-      status: "active",
-    })
-  }
 
   const handleProductInputChange = (e) => {
     const { name, value, type, files } = e.target
@@ -215,7 +205,7 @@ const SellerPage = () => {
   }
 
   const handleAddProduct = () => {
-    resetProductForm()
+    // resetProductForm()
     setEditingProduct(null)
     setShowProductModal(true)
   }
@@ -229,17 +219,33 @@ const SellerPage = () => {
       discount_price: product.discount_price || "",
       quantity: product.quantity,
       description: product.description,
-      image: product.image,
       status: product.status,
     })
     setShowProductModal(true)
   }
 
   const handleDeleteProduct = (productId) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      setProducts((prev) => prev.filter((product) => product.id !== productId))
+    setProductToDelete(productId);     // save the selected product ID
+    setShowDeleteModal(true);
+  }
+
+  const confirmDeleteProduct = async () => {
+    try {
+      const res = await axiosInstance.delete(`http://localhost:8000/api/products/delete_product/${productToDelete}/`,{
+        headers:{
+          Authorization:`Bearer ${localStorage.getItem('access_token')}`
+        }
+      })
+      if(res.status===200){
+        setShowDeleteModal(false)
+        toast.success("Product deleted successfully")
+        fetch_seller_products()
+      }
+    }catch(error){
+      console.log(error)
     }
   }
+
 
   const onSubmit = async (data) => {
     const formData = new FormData();
@@ -324,9 +330,9 @@ const SellerPage = () => {
     return matchesSearch && matchesCategory
   })
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage)
+  // const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+  // const startIndex = (currentPage - 1) * itemsPerPage
+  // const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage)
 
   // Dashboard stats
   const totalProducts = products.length
@@ -481,6 +487,27 @@ const SellerPage = () => {
     )
   }
 
+  const DeleteModal = ({ show, onHide, onConfirm, itemName = "item" }) => {
+    return (
+      <Modal show={show} onHide={onHide} centered backdrop="static">
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Deletion</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete this product ? This action cannot be undone.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={onHide}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={onConfirm}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
   const OrderModal = () => {
     if (!showOrderModal || !selectedOrder) return null
 
@@ -614,6 +641,23 @@ const SellerPage = () => {
     return pages
   }
 
+  const handleLogut = async () => {
+    try {
+      const res = await axiosInstance.get('http://localhost:8000/api/users/logout/', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
+        }
+      })
+      if (res.status === 200) {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        navigate('/login')
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   return (
     <div className="seller-page">
       {/* Header */}
@@ -630,6 +674,7 @@ const SellerPage = () => {
               </div>
             </div>
             <div className="d-flex align-items-center">
+              <button className="btn btn-warning mx-3" onClick={handleLogut}>Logout</button>
               {notifications.length > 0 && (
                 <div className="dropdown me-3">
                   <button className="btn btn-outline-danger position-relative" type="button" data-bs-toggle="dropdown">
@@ -640,11 +685,11 @@ const SellerPage = () => {
                   </button>
                   <ul className="dropdown-menu dropdown-menu-end notification-dropdown">
                     {notifications.map((notif) => (
-                      <li key={notif.id} className={`dropdown-item-text alert alert-${notif.type} alert-sm mb-1`}>
-                        <div className="d-flex justify-content-between align-items-start">
+                      <li key={notif.id} className={`dropdown-item-text alert alert-${notif.type} alert-sm mb-1 `}>
+                        <div className="d-flex justify-content-between align-items-start ">
                           <small>{notif.message}</small>
                           <button
-                            className="btn-close btn-close-sm"
+                            className="btn-close btn-close-sm "
                             onClick={() => dismissNotification(notif.id)}
                           ></button>
                         </div>
@@ -773,7 +818,7 @@ const SellerPage = () => {
             </div>
 
             <div className="row g-3">
-              {paginatedProducts.map((product) => (
+              {products.map((product) => (
                 <div key={product.id} className="col-md-6 col-lg-4">
                   <div className="card product-card h-100">
                     <div className="position-relative">
@@ -923,6 +968,12 @@ const SellerPage = () => {
       {/* Modals */}
       <ProductModal />
       <OrderModal />
+      <DeleteModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteProduct}     // actual deletion logic
+        itemName="product"
+      />
     </div>
   )
 }

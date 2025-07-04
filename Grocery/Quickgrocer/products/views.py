@@ -6,6 +6,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Category,Product,Cart
 from users.models import Users
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+
+
+class ProductPagination(PageNumberPagination):
+    page_size = 6  # Default items per page
+    page_size_query_param = 'page_size'  # Allow client to override page size
+    max_page_size = 100
 
 # Adding category
 @api_view(['POST'])
@@ -41,14 +49,28 @@ def add_product(request):
     return Response(serializer.errors,status=400)
 
 # Listing all products(for admin)
+# @api_view(['GET'])
+# @role_required(allowed_roles=['seller','admin'])
+# def list_all_products(request):
+#     products = Product.objects.all()
+#     if products:
+#         serializer = ProductSerializer(products,many=True)
+#         return Response(serializer.data,status=200)
+#     return Response({"error":"There no products"},status=200)
 @api_view(['GET'])
 @role_required(allowed_roles=['seller','admin'])
 def list_all_products(request):
-    products = Product.objects.all()
-    if products:
-        serializer = ProductSerializer(products,many=True)
-        return Response(serializer.data,status=200)
-    return Response({"error":"There no products"},status=200)
+    search = request.query_params.get('search','')
+    category = request.query_params.get('category','')
+    products = Product.objects.all().order_by('-created_at')
+    if search:
+        products = products.filter(name__icontains=search)
+    if category:
+        products = products.filter(category=category)
+    paginator = ProductPagination()
+    paginated_products = paginator.paginate_queryset(products, request)
+    serializer = ProductSerializer(paginated_products, many=True)
+    return paginator.get_paginated_response(serializer.data)
 
 # List single product
 @api_view(['GET'])
@@ -118,4 +140,16 @@ def update_product(request,product_id):
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data,status=200)
+    print(serializer.errors)
     return Response(serializer.errors,status=400)
+
+# Delete a product
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_product(request,product_id):
+    try:
+        product = Product.objects.get(id=product_id,seller=request.user)
+    except Product.DoesNotExist:
+        return Response({"error":"Product not found"},status=404)
+    product.delete()
+    return Response({"message":"producted deleted successfully"},status=200)
