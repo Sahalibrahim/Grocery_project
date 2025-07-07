@@ -8,6 +8,7 @@ import ProtectedRoute from './ProtectedRoute/ProtectedRoute'
 import PublicOnlyRoute from './ProtectedRoute/PublicOnlyRoute'
 import AddressPage from './Components/AddressPage'
 import SellerPage from './Components/SellerPage'
+import ProductsPage from './Components/ProductsPage'
 
 function App() {
 
@@ -49,6 +50,12 @@ function App() {
         <Route path='/sellerpage' element={
           <ProtectedRoute>
             <SellerPage/>
+          </ProtectedRoute>
+        }/>
+
+        <Route path='/productspage' element={
+          <ProtectedRoute>
+            <ProductsPage/>
           </ProtectedRoute>
         }/>
 

@@ -1,12 +1,59 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaSearch, FaUser, FaShoppingCart, FaMapMarkerAlt, FaBars, FaChevronDown, FaStar, FaRegClock, FaWhatsapp } from 'react-icons/fa';
 import { BsGridFill, BsPercent, BsGift } from 'react-icons/bs';
 import { IoIosArrowForward } from 'react-icons/io';
 import { FaShoppingBasket, FaAppleAlt, FaBreadSlice, FaCookie, FaWineBottle, FaBroom } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../Utils/AxiosInstance';
+import { Link } from 'react-router-dom';
 
 const Home = () => {
+    const [products, setProducts] = useState([])
+    const [discountProducts, setDiscountProducts] = useState([])
     const navigate = useNavigate()
+
+    useEffect(() => {
+        const Home_products = async () => {
+            try {
+                const res = await axiosInstance.get('http://localhost:8000/api/products/home_products/', {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                })
+                if (res.status === 200) {
+                    setProducts(res.data)
+                    console.log(res.data)
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        Home_products()
+    }, [])
+
+    useEffect(() => {
+        const discountProducts = async () => {
+            try {
+                const res = await axiosInstance.get('http://localhost:8000/api/products/get_discount_products/', {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                })
+                if (res.status === 200) {
+                    setDiscountProducts(res.data)
+                }
+            } catch (errror) {
+                console.log(error)
+            }
+        }
+        discountProducts()
+    }, [])
+
+    const handleViewAll = () => {
+        navigate('/productspage')
+    }
+
+
     return (
         <div className="jiomart-clone">
             {/* Top Navigation Bar */}
@@ -29,8 +76,8 @@ const Home = () => {
                             </button>
                         </div> */}
                         <div className="d-flex">
-                            <a onClick={()=>navigate('/user_profile')} style={{cursor:"pointer"}} className="nav-link me-3"><FaUser size={20} /></a>
-                            <a href="#" style={{cursor:"pointer"}} className="nav-link"><FaShoppingCart size={20} /></a>
+                            <a onClick={() => navigate('/user_profile')} style={{ cursor: "pointer" }} className="nav-link me-3"><FaUser size={20} /></a>
+                            <a href="#" style={{ cursor: "pointer" }} className="nav-link"><FaShoppingCart size={20} /></a>
                         </div>
                     </div>
                 </div>
@@ -81,34 +128,56 @@ const Home = () => {
 
             {/* Banner Slider */}
 
-                {/* Banner Slider */}
-                <div className="container mb-4">
-                    <div className="rounded" style={{ 
-                        height: '150px', 
-                        backgroundImage: 'url(https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80)',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center'
-                    }}></div>
-                </div>
+            {/* Banner Slider */}
+            <div className="container mb-4">
+                <div className="rounded" style={{
+                    height: '150px',
+                    backgroundImage: 'url(https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                }}></div>
+            </div>
 
             {/* Deals of the Day */}
             <div className="container mb-4">
                 <div className="d-flex justify-content-between align-items-center mb-3">
                     <h5 className="mb-0">Deals of the Day</h5>
-                    <a href="#" className="text-danger">View All</a>
+                    <a href='/productspage' className="text-danger">View All</a>
                 </div>
                 <div className="row g-3">
-                    {[1, 2, 3, 4, 5, 6].map((item) => (
-                        <div className="col-4 col-md-2" key={item}>
+                    {products.map((item) => (
+                        <div className="col-4 col-md-2" key={item.id}>
                             <div className="card border-0">
-                                <div className="bg-light rounded" style={{ height: '100px' }}></div>
+                                <div className="bg-light rounded" style={{ height: '100px', overflow: 'hidden' }}>
+                                    <img
+                                        src={`http://localhost:8000${item.image}`}
+                                        alt={item.name}
+                                        style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                                    />
+                                </div>
                                 <div className="p-2">
-                                    <small className="d-block text-truncate">Product Name {item}</small>
+                                    <small className="d-block text-truncate">{item.name}</small>
+                                    {/* <div className="d-flex justify-content-between align-items-center">
+                                        <span className="text-succ fw-bold">₹{item.discount_price}</span>
+                                        <small className="text-decoration-line-through text-muted">₹{ item.price}</small>
+                                    </div> */}
+
                                     <div className="d-flex justify-content-between align-items-center">
-                                        <span className="text-succ fw-bold">₹{99 + item}</span>
-                                        <small className="text-decoration-line-through text-muted">₹{149 + item}</small>
+                                        {item.discount_price > 0 ? (
+                                            <>
+                                                <span className="text fw-bold">₹{item.discount_price}</span>
+                                                <small className="text-decoration-line-through text-muted">₹{item.price}</small>
+                                            </>
+                                        ) : (
+                                            <span className="text fw-bold">₹{item.price}</span>
+                                        )}
                                     </div>
-                                    <small className="text-success d-block">{30 + item}% off</small>
+                                    {/* <small className="text-success d-block">{item.price}% off</small> */}
+                                    {item.discount_price && (
+                                        <small className="text-success d-block">
+                                            {Math.round(((item.price - item.discount_price) / item.price) * 100)}% OFF
+                                        </small>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -144,16 +213,28 @@ const Home = () => {
             <div className="container mb-4">
                 <div className="d-flex justify-content-between align-items-center mb-3">
                     <h5 className="mb-0">Top Offers</h5>
-                    <a href="#" className="text-danger">View All</a>
+                    <a href="/productspage" className="text-danger">View All</a>
                 </div>
                 <div className="row g-3">
-                    {[1, 2, 3, 4].map((item) => (
+                    {discountProducts.map((item) => (
                         <div className="col-6 col-md-3" key={item}>
                             <div className="card border-0">
-                                <div className="bg-light rounded" style={{ height: '120px' }}></div>
+                                <div className="bg-light rounded" style={{ height: '120px', overflow: 'hidden' }}>
+                                    <img
+                                        src={`http://localhost:8000${item.image}`}
+                                        alt={item.name}
+                                        style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                                    />
+                                </div>
                                 <div className="p-2">
-                                    <small className="d-block text-truncate">Special Offer {item}</small>
-                                    <small className="text-success d-block">{40 + item}% off</small>
+                                    <small className="d-block text-truncate"> {item.name}</small>
+                                    <small className="text d-block fw-bold">{item.discount_price}/-</small>
+                                    <small className="text-decoration-line-through text-muted">₹{item.price}</small>
+                                    {item.discount_price && (
+                                        <small className="text-success d-block">
+                                            {Math.round(((item.price - item.discount_price) / item.price) * 100)}% OFF
+                                        </small>
+                                    )}
                                 </div>
                             </div>
                         </div>

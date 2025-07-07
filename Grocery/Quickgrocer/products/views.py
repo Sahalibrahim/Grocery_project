@@ -153,3 +153,28 @@ def delete_product(request,product_id):
         return Response({"error":"Product not found"},status=404)
     product.delete()
     return Response({"message":"producted deleted successfully"},status=200)
+
+# Display products in home
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def home_products(request):
+    products = Product.objects.order_by('?')[:12]
+    serializer = ProductSerializer(products,many=True)
+    return Response(serializer.data,status=200)
+
+# Discounted products
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_discount_products(request):
+    products = Product.objects.filter(discount_price__gt=0)
+    discounted_products = products.order_by('?')[:8]
+    serializer = ProductSerializer(discounted_products,many=True)
+    return Response(serializer.data,status=200)
+
+# Display products in Productspage
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def all_products(request):
+    products = Product.objects.all()
+    serializer = ProductSerializer(products,many=True)
+    return Response(serializer.data,status=200)

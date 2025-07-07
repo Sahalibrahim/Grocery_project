@@ -113,6 +113,35 @@ const SellerPage = () => {
   }, [navigate, products])
 
   useEffect(() => {
+    if (showProductModal) {
+      if (editingProduct) {
+        // If editing a product, fill the form with existing product data
+        reset({
+          name: editingProduct.name || '',
+          category: editingProduct.category || '',
+          price: editingProduct.price || 0,
+          discount_price: editingProduct.discount_price || 0,
+          quantity: editingProduct.quantity || 0,
+          description: editingProduct.description || '',
+          status: editingProduct.status || 'active'
+        });
+      } else {
+        // If adding a new product, reset to default empty values
+        reset({
+          name: '',
+          category: '',
+          price: 0,
+          discount_price: 0,
+          quantity: 0,
+          description: '',
+          status: 'active'
+        });
+      }
+    }
+  }, [editingProduct, showProductModal, reset]);
+
+
+  useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await axiosInstance.get('http://localhost:8000/api/products/list_category/', {
@@ -231,17 +260,17 @@ const SellerPage = () => {
 
   const confirmDeleteProduct = async () => {
     try {
-      const res = await axiosInstance.delete(`http://localhost:8000/api/products/delete_product/${productToDelete}/`,{
-        headers:{
-          Authorization:`Bearer ${localStorage.getItem('access_token')}`
+      const res = await axiosInstance.delete(`http://localhost:8000/api/products/delete_product/${productToDelete}/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
         }
       })
-      if(res.status===200){
+      if (res.status === 200) {
         setShowDeleteModal(false)
         toast.success("Product deleted successfully")
         fetch_seller_products()
       }
-    }catch(error){
+    } catch (error) {
       console.log(error)
     }
   }
@@ -340,6 +369,12 @@ const SellerPage = () => {
   const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount, 0)
   const outOfStockCount = products.filter((p) => p.stock === 0).length
 
+  const handleButtonClose = () => {
+    setShowProductModal(false);
+    setEditingProduct(null);
+    reset();
+  }
+
   const ProductModal = () => {
     if (!showProductModal) return null
 
@@ -349,7 +384,7 @@ const SellerPage = () => {
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title">{editingProduct ? "Edit Product" : "Add New Product"}</h5>
-              <button type="button" className="btn-close" onClick={() => setShowProductModal(false)}></button>
+              <button type="button" className="btn-close" onClick={() => handleButtonClose()}></button>
             </div>
             <div className="modal-body">
               <form onSubmit={handleSubmit(onSubmit)}>
@@ -859,16 +894,6 @@ const SellerPage = () => {
                           Stock: {product.quantity}
                         </span>
                       </div>
-                      {/* <div className="mb-3">
-                        <label className="form-label small">Update Stock:</label>
-                        <input
-                          type="number"
-                          className="form-control form-control-sm"
-                          value={product.quantity}
-                          onChange={(e) => handleUpdateStock(product.id, e.target.value)}
-                          min="0"
-                        />
-                      </div> */}
                       <div className="btn-group w-100" role="group">
                         <button className="btn btn-outline-primary btn-sm" onClick={() => handleEditProduct(product)}>
                           <FaEdit />
