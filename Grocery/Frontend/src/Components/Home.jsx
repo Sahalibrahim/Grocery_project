@@ -150,7 +150,7 @@ const Home = () => {
                             <div className="card border-0">
                                 <div className="bg-light rounded" style={{ height: '100px', overflow: 'hidden' }}>
                                     <img
-                                        src={`http://localhost:8000${item.image}`}
+                                        src={item.image}
                                         alt={item.name}
                                         style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
                                     />
@@ -221,7 +221,8 @@ const Home = () => {
                             <div className="card border-0">
                                 <div className="bg-light rounded" style={{ height: '120px', overflow: 'hidden' }}>
                                     <img
-                                        src={`http://localhost:8000${item.image}`}
+                                        // src={`http://localhost:8000${item.image}`}
+                                        src={item.image}
                                         alt={item.name}
                                         style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
                                     />

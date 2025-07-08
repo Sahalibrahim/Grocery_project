@@ -1,13 +1,14 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view,permission_classes
 from users.permissions import role_required
-from .serializers import CategorySerializer,ProductSerializer,CartSerializer
+from .serializers import CategorySerializer,ProductSerializer,CartSerializer,WishlistSerializer
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Category,Product,Cart
+from .models import Category,Product,Cart,Wishlist
 from users.models import Users
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q
 
 
 class ProductPagination(PageNumberPagination):
@@ -27,7 +28,7 @@ def add_category(request):
 
 # Listing Categories
 @api_view(['GET'])
-@role_required(allowed_roles=['seller','admin'])
+@role_required(allowed_roles=['seller','admin','user'])
 def list_category(request):
     categories = Category.objects.all()
     if categories:
@@ -49,20 +50,13 @@ def add_product(request):
     return Response(serializer.errors,status=400)
 
 # Listing all products(for admin)
-# @api_view(['GET'])
-# @role_required(allowed_roles=['seller','admin'])
-# def list_all_products(request):
-#     products = Product.objects.all()
-#     if products:
-#         serializer = ProductSerializer(products,many=True)
-#         return Response(serializer.data,status=200)
-#     return Response({"error":"There no products"},status=200)
 @api_view(['GET'])
 @role_required(allowed_roles=['seller','admin'])
 def list_all_products(request):
     search = request.query_params.get('search','')
     category = request.query_params.get('category','')
-    products = Product.objects.all().order_by('-created_at')
+    # products = Product.objects.all().order_by('-created_at')
+    products = Product.objects.filter(seller=request.user).order_by('-created_at')
     if search:
         products = products.filter(name__icontains=search)
     if category:
@@ -159,7 +153,7 @@ def delete_product(request,product_id):
 @permission_classes([IsAuthenticated])
 def home_products(request):
     products = Product.objects.order_by('?')[:12]
-    serializer = ProductSerializer(products,many=True)
+    serializer = ProductSerializer(products,many=True,context={'request': request})
     return Response(serializer.data,status=200)
 
 # Discounted products
@@ -168,13 +162,81 @@ def home_products(request):
 def get_discount_products(request):
     products = Product.objects.filter(discount_price__gt=0)
     discounted_products = products.order_by('?')[:8]
-    serializer = ProductSerializer(discounted_products,many=True)
+    serializer = ProductSerializer(discounted_products,many=True,context={'request': request})
     return Response(serializer.data,status=200)
+
+# Display products in Productspage
+# def all_products(request):
+#     products = Product.objects.all()
+#     serializer = ProductSerializer(products,many=True)
+#     return Response(serializer.data,status=200)
 
 # Display products in Productspage
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def all_products(request):
+    # Extract filters
+    search = request.GET.get('search', '')
+    category = request.GET.get('category', '')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    sort_by = request.GET.get('sort_by', 'name')  # e.g., name, price, rating
+    sort_order = request.GET.get('sort_order', 'asc')  # asc or desc
+
+    # Base queryset
     products = Product.objects.all()
-    serializer = ProductSerializer(products,many=True)
-    return Response(serializer.data,status=200)
+
+    # Search
+    if search:
+        products = products.filter(
+            Q(name__icontains=search) | Q(description__icontains=search)
+        )
+
+    # Category filter
+    if category:
+        products = products.filter(category__id=category)
+
+    # Price filter
+    if min_price:
+        products = products.filter(price__gte=min_price)
+    if max_price:
+        products = products.filter(price__lte=max_price)
+
+    # Sorting
+    if sort_by in ['name', 'price', 'rating']:
+        if sort_order == 'desc':
+            sort_by = f'-{sort_by}'
+        products = products.order_by(sort_by)
+
+    # Pagination
+    paginator = PageNumberPagination()
+    paginator.page_size = int(request.GET.get('limit', 12))
+    paginated_products = paginator.paginate_queryset(products, request)
+
+    serializer = ProductSerializer(paginated_products, many=True,context={'request': request})
+    print(serializer.data)
+    return paginator.get_paginated_response(serializer.data)
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_wishlist(request, product_id):
+    user = request.user
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        return Response({"error": "Product not found"}, status=404)
+
+    wishlist_item, created = Wishlist.objects.get_or_create(user=user, product=product)
+    if not created:
+        wishlist_item.delete()
+        return Response({"wishlisted": False})
+    return Response({"wishlisted": True})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_wishlist(request):
+    wishlist = Wishlist.objects.filter(user=request.user)
+    serializer = WishlistSerializer(wishlist, many=True)
+    return Response(serializer.data)

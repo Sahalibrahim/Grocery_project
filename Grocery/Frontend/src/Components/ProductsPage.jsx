@@ -18,121 +18,7 @@ import "../Style/ProductsPage.css"
 import axiosInstance from "../Utils/AxiosInstance"
 
 const ProductsPage = () => {
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Organic Apples",
-      category: "Fruits",
-      price: 120,
-      discount_price: 100,
-      stock: 50,
-      description: "Fresh organic apples from Kashmir",
-      image: "/placeholder.svg?height=250&width=250",
-      rating: 4.5,
-      reviews: 128,
-      seller: "Fresh Fruits Co.",
-      is_featured: true,
-    },
-    {
-      id: 2,
-      name: "Brown Rice",
-      category: "Grains",
-      price: 80,
-      discount_price: null,
-      stock: 25,
-      description: "Premium quality brown rice",
-      image: "/placeholder.svg?height=250&width=250",
-      rating: 4.2,
-      reviews: 89,
-      seller: "Grain Masters",
-      is_featured: false,
-    },
-    {
-      id: 3,
-      name: "Extra Virgin Olive Oil",
-      category: "Oils",
-      price: 450,
-      discount_price: 400,
-      stock: 15,
-      description: "Premium extra virgin olive oil",
-      image: "/placeholder.svg?height=250&width=250",
-      rating: 4.8,
-      reviews: 256,
-      seller: "Oil Express",
-      is_featured: true,
-    },
-    {
-      id: 4,
-      name: "Fresh Spinach",
-      category: "Vegetables",
-      price: 30,
-      discount_price: 25,
-      stock: 100,
-      description: "Fresh green spinach leaves",
-      image: "/placeholder.svg?height=250&width=250",
-      rating: 4.3,
-      reviews: 67,
-      seller: "Green Veggies",
-      is_featured: false,
-    },
-    {
-      id: 5,
-      name: "Whole Wheat Bread",
-      category: "Bakery",
-      price: 45,
-      discount_price: null,
-      stock: 30,
-      description: "Fresh whole wheat bread",
-      image: "/placeholder.svg?height=250&width=250",
-      rating: 4.1,
-      reviews: 45,
-      seller: "Daily Bread",
-      is_featured: false,
-    },
-    {
-      id: 6,
-      name: "Greek Yogurt",
-      category: "Dairy",
-      price: 85,
-      discount_price: 75,
-      stock: 40,
-      description: "Creamy Greek yogurt",
-      image: "/placeholder.svg?height=250&width=250",
-      rating: 4.6,
-      reviews: 134,
-      seller: "Dairy Fresh",
-      is_featured: true,
-    },
-    {
-      id: 7,
-      name: "Almonds",
-      category: "Nuts",
-      price: 600,
-      discount_price: 550,
-      stock: 20,
-      description: "Premium California almonds",
-      image: "/placeholder.svg?height=250&width=250",
-      rating: 4.7,
-      reviews: 198,
-      seller: "Nuts & More",
-      is_featured: false,
-    },
-    {
-      id: 8,
-      name: "Green Tea",
-      category: "Beverages",
-      price: 150,
-      discount_price: null,
-      stock: 60,
-      description: "Organic green tea leaves",
-      image: "/placeholder.svg?height=250&width=250",
-      rating: 4.4,
-      reviews: 87,
-      seller: "Tea Garden",
-      is_featured: false,
-    },
-  ])
-
+  // const [products, setProducts] = useState([])
   const [filteredProducts, setFilteredProducts] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
@@ -141,109 +27,82 @@ const ProductsPage = () => {
   const [sortOrder, setSortOrder] = useState("asc")
   const [viewMode, setViewMode] = useState("grid") // grid or list
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(12)
+  const [itemsPerPage] = useState(9)
   const [wishlist, setWishlist] = useState([])
   const [cart, setCart] = useState([])
   const [showFilters, setShowFilters] = useState(false)
+  const [categories, setCategories] = useState([])
+  const [totalPages, setTotalPages] = useState(1)
+
 
   const navigate = useNavigate()
 
-  const categories = [
-    "Fruits",
-    "Vegetables",
-    "Grains",
-    "Dairy",
-    "Oils",
-    "Spices",
-    "Beverages",
-    "Snacks",
-    "Bakery",
-    "Nuts",
-  ]
 
   useEffect(() => {
-    filterAndSortProducts()
-  }, [products, searchTerm, selectedCategory, priceRange, sortBy, sortOrder])
-
-  useEffect(()=>{
     const fetch_all_products = async () => {
-        try{
-            const res = await axiosInstance.get('http://localhost:8000/api/products/all_products/',{
-                headers:{
-                    Authorization:`Bearer ${localStorage.getItem('access_token')}`
-                }
-            })
-            if(res.status===200){
-                setProducts(res.data)
-                console.log(res.data)
-            }
-        }catch(error){
-            console.log(error)
+      try {
+        const res = await axiosInstance.get('http://localhost:8000/api/products/all_products/', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`
+          },
+          params: {
+            search: searchTerm,
+            category: selectedCategory,
+            min_price: priceRange.min,
+            max_price: priceRange.max,
+            sort_by: sortBy,
+            sort_order: sortOrder,
+            page: currentPage,
+            limit: itemsPerPage,
+          },
+        })
+        if (res.status === 200) {
+          setFilteredProducts(res.data.results)
+          setTotalPages(Math.ceil(res.data.count / itemsPerPage))
         }
+      } catch (error) {
+        console.log(error)
+      }
     }
     fetch_all_products()
-  },[])
+  }, [searchTerm, selectedCategory, priceRange, sortBy, sortOrder, currentPage])
 
-  const filterAndSortProducts = () => {
-    let filtered = [...products]
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (product) =>
-          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.description.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
+  useEffect(() => {
+    const fetch_category = async () => {
+      try {
+        const res = await axiosInstance.get('http://localhost:8000/api/products/list_category/', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`
+          }
+        })
+        if (res.status === 200) {
+          setCategories(res.data)
+        }
+      } catch (error) {
+        console.log(error)
+      }
     }
+    fetch_category()
+  }, [])
 
-    // Category filter
-    if (selectedCategory) {
-      filtered = filtered.filter((product) => product.category === selectedCategory)
-    }
 
-    // Price range filter
-    if (priceRange.min || priceRange.max) {
-      filtered = filtered.filter((product) => {
-        const price = product.discount_price || product.price
-        const min = priceRange.min ? Number.parseFloat(priceRange.min) : 0
-        const max = priceRange.max ? Number.parseFloat(priceRange.max) : Number.POSITIVE_INFINITY
-        return price >= min && price <= max
+  const toggleWishlist = async (productId) => {
+    try {
+      const res = await axiosInstance.post(`http://localhost:8000/api/products/wishlist/${productId}/toggle/`, {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`
+        }
       })
+      if (res.status === 200) {
+        setFilteredProducts((prev) =>
+          prev.map((p) =>
+            p.id === productId ? { ...p, is_wishlisted: res.data.wishlisted } : p
+          )
+        )
+      }
+    } catch (error) {
+      console.error("Error toggling wishlist:", error)
     }
-
-    // Sort products
-    filtered.sort((a, b) => {
-      let aValue, bValue
-
-      switch (sortBy) {
-        case "price":
-          aValue = a.discount_price || a.price
-          bValue = b.discount_price || b.price
-          break
-        case "rating":
-          aValue = a.rating
-          bValue = b.rating
-          break
-        case "name":
-        default:
-          aValue = a.name.toLowerCase()
-          bValue = b.name.toLowerCase()
-          break
-      }
-
-      if (sortOrder === "asc") {
-        return aValue > bValue ? 1 : -1
-      } else {
-        return aValue < bValue ? 1 : -1
-      }
-    })
-
-    setFilteredProducts(filtered)
-    setCurrentPage(1) // Reset to first page when filters change
-  }
-
-  const toggleWishlist = (productId) => {
-    setWishlist((prev) => (prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]))
   }
 
   const addToCart = (product) => {
@@ -265,31 +124,6 @@ const ProductsPage = () => {
     setSortOrder("asc")
   }
 
-  // Pagination
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage)
-
-  const renderStars = (rating) => {
-    const stars = []
-    const fullStars = Math.floor(rating)
-    const hasHalfStar = rating % 1 !== 0
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<FaStar key={i} className="text-warning" />)
-    }
-
-    if (hasHalfStar) {
-      stars.push(<FaStar key="half" className="text-warning opacity-50" />)
-    }
-
-    const emptyStars = 5 - Math.ceil(rating)
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(<FaStar key={`empty-${i}`} className="text-muted" />)
-    }
-
-    return stars
-  }
 
   const renderPagination = () => {
     const pages = []
@@ -339,7 +173,7 @@ const ProductsPage = () => {
       <div className="card product-card h-100">
         {/* Image Section */}
         <div className="product-image-container">
-          <img src={`http://localhost:8000${product.image}`} className="product-image" alt={product.name} />
+          <img src={product.image} className="product-image" alt={product.name} />
 
           {/* Badges */}
           <div className="product-badges">
@@ -352,12 +186,20 @@ const ProductsPage = () => {
           </div>
 
           {/* Wishlist Button */}
-          <button
+          {/* <button
             className={`wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}`}
             onClick={() => toggleWishlist(product.id)}
             title={wishlist.includes(product.id) ? "Remove from wishlist" : "Add to wishlist"}
           >
             {wishlist.includes(product.id) ? <FaHeart /> : <FaRegHeart />}
+          </button> */}
+
+          <button
+            className={`wishlist-btn ${product.is_wishlisted ? "active" : ""}`}
+            onClick={() => toggleWishlist(product.id)}
+            title={product.is_wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            {product.is_wishlisted ? <FaHeart /> : <FaRegHeart />}
           </button>
         </div>
 
@@ -408,7 +250,7 @@ const ProductsPage = () => {
         <div className="col-md-3">
           <div className="position-relative">
             <img
-              src={`http://localhost:8000${product.image}`}
+              src={product.image}
               className="img-fluid rounded-start"
               alt={product.name}
               style={{ height: "150px", width: "100%", objectFit: "cover" }}
@@ -459,11 +301,18 @@ const ProductsPage = () => {
                     <FaShoppingCart className="me-2" />
                     {product.quantity === 0 ? "Out of Stock" : "Add to Cart"}
                   </button>
-                  <button
+                  {/* <button
                     className={`btn btn-sm ${wishlist.includes(product.id) ? "btn-outline-danger" : "btn-outline-secondary"}`}
                     onClick={() => toggleWishlist(product.id)}
                   >
                     {wishlist.includes(product.id) ? <FaHeart /> : <FaRegHeart />}
+                  </button> */}
+                  <button
+                    className={`wishlist-btnn ${product.is_wishlisted ? "active" : ""}`}
+                    onClick={() => toggleWishlist(product.id)}
+                    title={product.is_wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                  >
+                    {product.is_wishlisted ? <FaHeart /> : <FaRegHeart />}
                   </button>
                 </div>
               </div>
@@ -490,7 +339,7 @@ const ProductsPage = () => {
 
           <div className="d-flex align-items-center ms-auto">
             <div className="d-flex">
-              <a href="#" className="nav-link me-3 position-relative">
+              <a onClick={() => navigate('/user_profile')} className="nav-link me-3 position-relative">
                 <FaUser size={20} className="text-danger" />
               </a>
               <a href="#" className="nav-link position-relative">
@@ -559,8 +408,8 @@ const ProductsPage = () => {
                   >
                     <option value="">All Categories</option>
                     {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
+                      <option key={category.id} value={category.id}>
+                        {category.name}
                       </option>
                     ))}
                   </select>
@@ -603,12 +452,12 @@ const ProductsPage = () => {
           <div className="col-md-9">
             {/* Toolbar */}
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <div className="d-flex align-items-center">
+              {/* <div className="d-flex align-items-center">
                 <span className="text-muted me-3">
                   Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredProducts.length)} of{" "}
                   {filteredProducts.length} products
                 </span>
-              </div>
+              </div> */}
               <div className="d-flex align-items-center">
                 <div className="me-3">
                   <select
@@ -624,7 +473,7 @@ const ProductsPage = () => {
                     <option value="name-desc">Name (Z-A)</option>
                     <option value="price-asc">Price (Low to High)</option>
                     <option value="price-desc">Price (High to Low)</option>
-                    <option value="rating-desc">Rating (High to Low)</option>
+                    {/* <option value="rating-desc">Rating (High to Low)</option> */}
                   </select>
                 </div>
                 <div className="btn-group" role="group">
@@ -645,17 +494,17 @@ const ProductsPage = () => {
             </div>
 
             {/* Products Grid/List */}
-            {paginatedProducts.length > 0 ? (
+            {filteredProducts.length > 0 ? (
               <>
                 {viewMode === "grid" ? (
                   <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
-                    {paginatedProducts.map((product) => (
+                    {filteredProducts.map((product) => (
                       <ProductCard key={product.id} product={product} />
                     ))}
                   </div>
                 ) : (
                   <div>
-                    {paginatedProducts.map((product) => (
+                    {filteredProducts.map((product) => (
                       <ProductListItem key={product.id} product={product} />
                     ))}
                   </div>

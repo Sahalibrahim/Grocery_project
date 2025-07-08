@@ -18,6 +18,8 @@ urlpatterns = [
     path('home_products/',views.home_products,name='home_products'),
     path('get_discount_products/',views.get_discount_products,name='discount_products'),
     path('all_products/',views.all_products,name='all_products'),
+    path('wishlist/<int:product_id>/toggle/', views.toggle_wishlist, name='toggle-wishlist'),
+    path('wishlist/', views.my_wishlist, name='my-wishlist'),
 ]
 
 if settings.DEBUG:

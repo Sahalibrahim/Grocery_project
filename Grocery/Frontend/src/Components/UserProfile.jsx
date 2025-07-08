@@ -17,6 +17,7 @@ import {
   FaQuestionCircle,
   FaChevronRight,
   FaBars,
+  FaArrowLeft
 } from "react-icons/fa"
 import "../Style/UserProfile.css"
 import axios from "axios"
@@ -97,8 +98,8 @@ const UserProfile = () => {
         fetchUserInfo()
         console.log("successfully updated profile picture")
       }
-    }catch(error){
-      console.log("error",error)
+    } catch (error) {
+      console.log("error", error)
     }
   }
 
@@ -158,6 +159,9 @@ const UserProfile = () => {
       <nav className="navbar navbar-expand-lg navbar-light bg-white py-2">
         <div className="container">
           <div className="d-flex align-items-center">
+            <button className="btn btn-outline-secondary me-3 back-btn" onClick={() => navigate(-1)}>
+              <FaArrowLeft />
+            </button>
             <button className="navbar-toggler me-3 d-lg-none" type="button" onClick={() => navigate("/home")}>
               <FaBars />
             </button>
