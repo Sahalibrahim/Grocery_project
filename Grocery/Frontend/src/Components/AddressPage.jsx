@@ -415,10 +415,10 @@ const AddressPage = () => {
                       <FaStar className="me-1" />
                       Default
                     </div>
-                  )}
+                  )}  
 
                   <div className="address-header mb-3">
-                    <h6 className="mb-1">{address.full_name}</h6>
+                    <h6 className="mb-1">{address.full_name}&nbsp;&nbsp;</h6>
                     <small className="text-muted">{address.phone_number}</small>
                   </div>
 

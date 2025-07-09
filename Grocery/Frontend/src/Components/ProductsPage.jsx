@@ -13,9 +13,11 @@ import {
   FaUser,
   FaList,
   FaTh,
+  FaCheck
 } from "react-icons/fa"
 import "../Style/ProductsPage.css"
 import axiosInstance from "../Utils/AxiosInstance"
+import { toast } from 'react-toastify';
 
 const ProductsPage = () => {
   // const [products, setProducts] = useState([])
@@ -33,6 +35,8 @@ const ProductsPage = () => {
   const [showFilters, setShowFilters] = useState(false)
   const [categories, setCategories] = useState([])
   const [totalPages, setTotalPages] = useState(1)
+
+
 
 
   const navigate = useNavigate()
@@ -105,15 +109,24 @@ const ProductsPage = () => {
     }
   }
 
-  const addToCart = (product) => {
-    setCart((prev) => {
-      const existingItem = prev.find((item) => item.id === product.id)
-      if (existingItem) {
-        return prev.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
-      } else {
-        return [...prev, { ...product, quantity: 1 }]
+  const addToCart = async (product) => {
+    try {
+      const res = await axiosInstance.post('http://localhost:8000/api/products/add_to_cart/', {
+        'product_id': product.id,
+        'quantity': 1
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
+        }
+      })
+      if (res.status === 200) {
+        console.log("product added successfully to cart")
+        toast.success("Product added to cart successfully ✅");
       }
-    })
+    } catch (error) {
+      console.log(error)
+      toast.error("Something went wrong ❌");
+    }
   }
 
   const clearFilters = () => {
@@ -186,14 +199,6 @@ const ProductsPage = () => {
           </div>
 
           {/* Wishlist Button */}
-          {/* <button
-            className={`wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}`}
-            onClick={() => toggleWishlist(product.id)}
-            title={wishlist.includes(product.id) ? "Remove from wishlist" : "Add to wishlist"}
-          >
-            {wishlist.includes(product.id) ? <FaHeart /> : <FaRegHeart />}
-          </button> */}
-
           <button
             className={`wishlist-btn ${product.is_wishlisted ? "active" : ""}`}
             onClick={() => toggleWishlist(product.id)}
@@ -207,12 +212,6 @@ const ProductsPage = () => {
         <div className="product-details">
           <div className="product-category">{product.category_name}</div>
           <h6 className="product-title">{product.name}</h6>
-
-          {/* Rating */}
-          {/* <div className="product-rating">
-            <div className="stars">{renderStars(product.rating)}</div>
-            <span className="rating-count">({product.reviews})</span>
-          </div> */}
 
           {/* Price */}
           <div className="product-price">
@@ -268,10 +267,6 @@ const ProductsPage = () => {
               <div className="col-md-8">
                 <h5 className="card-title">{product.name}</h5>
                 <p className="text-muted small mb-2">{product.category_name}</p>
-                {/* <div className="d-flex align-items-center mb-2">
-                  <div className="me-2">{renderStars(product.rating)}</div>
-                  <small className="text-muted">({product.reviews} reviews)</small>
-                </div> */}
                 <p className="card-text">{product.description}</p>
                 <small className="text-muted">Sold by: {product.seller_name}</small>
               </div>
@@ -301,12 +296,6 @@ const ProductsPage = () => {
                     <FaShoppingCart className="me-2" />
                     {product.quantity === 0 ? "Out of Stock" : "Add to Cart"}
                   </button>
-                  {/* <button
-                    className={`btn btn-sm ${wishlist.includes(product.id) ? "btn-outline-danger" : "btn-outline-secondary"}`}
-                    onClick={() => toggleWishlist(product.id)}
-                  >
-                    {wishlist.includes(product.id) ? <FaHeart /> : <FaRegHeart />}
-                  </button> */}
                   <button
                     className={`wishlist-btnn ${product.is_wishlisted ? "active" : ""}`}
                     onClick={() => toggleWishlist(product.id)}
@@ -342,7 +331,7 @@ const ProductsPage = () => {
               <a onClick={() => navigate('/user_profile')} className="nav-link me-3 position-relative">
                 <FaUser size={20} className="text-danger" />
               </a>
-              <a href="#" className="nav-link position-relative">
+              <a onClick={()=>navigate('/cart')} className="nav-link position-relative">
                 <FaShoppingCart size={20} />
                 {cart.length > 0 && (
                   <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -452,12 +441,6 @@ const ProductsPage = () => {
           <div className="col-md-9">
             {/* Toolbar */}
             <div className="d-flex justify-content-between align-items-center mb-4">
-              {/* <div className="d-flex align-items-center">
-                <span className="text-muted me-3">
-                  Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredProducts.length)} of{" "}
-                  {filteredProducts.length} products
-                </span>
-              </div> */}
               <div className="d-flex align-items-center">
                 <div className="me-3">
                   <select

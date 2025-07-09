@@ -354,6 +354,28 @@
   letter-spacing: 0.5px;
 }
 
+/* ------------------ */
+/* Pulse animation when added to cart */
+/* @keyframes cart-added-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0px rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0px rgba(255, 255, 255, 0.5); */
+  /* } */
+/* } */
+
+/* .add-to-cart-btn.animate { */
+  /* animation: cart-added-pulse 0.4s ease; */
+/* } */
+/* --------------- */
+
 .add-to-cart-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #c8003d, #a6002f);
   transform: translateY(-2px);

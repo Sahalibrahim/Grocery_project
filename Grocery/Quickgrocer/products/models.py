@@ -37,7 +37,7 @@ class Product(models.Model):
 class Cart(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='user_carts')
     product = models.ForeignKey(Product,on_delete=models.CASCADE)
-    seller = models.ForeignKey('users.Users',on_delete=models.CASCADE,related_name='seller_carts')
+    seller = models.ForeignKey('users.Users',on_delete=models.CASCADE,related_name='seller_carts',null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1)
     added_at = models.DateTimeField(auto_now_add=True)
 

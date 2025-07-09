@@ -5,7 +5,8 @@ from .serializers import CategorySerializer,ProductSerializer,CartSerializer,Wis
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Category,Product,Cart,Wishlist
-from users.models import Users
+from users.models import Users,Address
+from users.serializers import AddressSerializer
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
@@ -40,8 +41,6 @@ def list_category(request):
 @api_view(['POST'])
 @role_required(allowed_roles=['seller','admin'])
 def add_product(request):
-    print(request.data)
-    print(request.FILES)
     seller = request.user
     serializer = ProductSerializer(data=request.data)
     if serializer.is_valid():
@@ -165,11 +164,6 @@ def get_discount_products(request):
     serializer = ProductSerializer(discounted_products,many=True,context={'request': request})
     return Response(serializer.data,status=200)
 
-# Display products in Productspage
-# def all_products(request):
-#     products = Product.objects.all()
-#     serializer = ProductSerializer(products,many=True)
-#     return Response(serializer.data,status=200)
 
 # Display products in Productspage
 @api_view(['GET'])
@@ -214,11 +208,10 @@ def all_products(request):
     paginated_products = paginator.paginate_queryset(products, request)
 
     serializer = ProductSerializer(paginated_products, many=True,context={'request': request})
-    print(serializer.data)
     return paginator.get_paginated_response(serializer.data)
 
 
-
+# Toggle wishlist 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def toggle_wishlist(request, product_id):
@@ -234,9 +227,95 @@ def toggle_wishlist(request, product_id):
         return Response({"wishlisted": False})
     return Response({"wishlisted": True})
 
+# Wishlist
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_wishlist(request):
     wishlist = Wishlist.objects.filter(user=request.user)
     serializer = WishlistSerializer(wishlist, many=True)
     return Response(serializer.data)
+
+# add to cart
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_to_cart(request):
+    product_id = request.data.get('product_id')
+    quantity = request.data.get('quantity',1)
+
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        return Response({"error":"Product not found"},status=404)
+    
+    cart_item,created = Cart.objects.get_or_create(user=request.user,product=product,seller=product.seller)
+
+    if not created:
+        cart_item.quantity += int(quantity)
+    else:
+        cart_item.quantity = int(quantity)
+    
+    cart_item.save()
+    serializer = CartSerializer(cart_item,context={'request': request})
+    return Response(serializer.data,status=200)
+
+# Get cart items
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_cart(request):
+    user = request.user
+    cart_items = Cart.objects.filter(user=user)
+    serializer = CartSerializer(cart_items,many=True,context={'request':request})
+    return Response(serializer.data,status=200)
+
+#delete product from cart
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_cart_product(request,itemId):
+    user = request.user
+    try:
+        product = Cart.objects.get(user=user,id=itemId)
+    except Cart.DoesNotExist:
+        return Response({"message":"Not found"},status=404)
+    
+    product.delete()
+    return Response({"message":"Product deleted successfully"},status=200)
+
+# add quantity
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_quantity(request,itemId):
+    user = request.user
+    try:
+        product = Cart.objects.get(user=user,id=itemId)
+    except Cart.DoesNotExist:
+        return Response({"message":"Product not found"},status=404)
+    
+    product.quantity += 1
+    product.save()
+    return Response({"message":"Quantity updated successfully"},status=200)
+
+# sub quantity
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def sub_quantity(request,itemId):
+    user = request.user
+    try:
+        product = Cart.objects.get(user=user,id=itemId)
+    except Cart.DoesNotExist:
+        return Response({"message":"Product not found"},status=404)
+    
+    product.quantity -= 1
+    product.save()
+    return Response({"message":"Quantity updated successfully"},status=200)
+
+# get user address
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_address(request):
+    try:
+        user = request.user
+        address = Address.objects.get(user=user,is_default=True)
+        serializer = AddressSerializer(address)
+        return Response(serializer.data,status=200)
+    except Address.DoesNotExist:
+        return Response({"error": "Default address not found"}, status=404)

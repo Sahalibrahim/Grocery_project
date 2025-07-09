@@ -69,15 +69,9 @@ const Home = () => {
                     </div>
 
                     <div className="d-flex align-items-center ms-auto">
-                        {/* <div className="dropdown me-3">
-                            <button className="btn btn-outline-secondary dropdown-toggle" type="button" id="locationDropdown">
-                                <FaMapMarkerAlt className="me-1" />
-                                <span>Mumbai, 400001</span>
-                            </button>
-                        </div> */}
                         <div className="d-flex">
                             <a onClick={() => navigate('/user_profile')} style={{ cursor: "pointer" }} className="nav-link me-3"><FaUser size={20} /></a>
-                            <a href="#" style={{ cursor: "pointer" }} className="nav-link"><FaShoppingCart size={20} /></a>
+                            <a onClick={()=> navigate('/cart')} style={{ cursor: "pointer" }} className="nav-link"><FaShoppingCart size={20} /></a>
                         </div>
                     </div>
                 </div>
