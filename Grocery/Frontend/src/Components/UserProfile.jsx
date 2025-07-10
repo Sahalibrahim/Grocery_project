@@ -124,7 +124,7 @@ const UserProfile = () => {
       icon: <FaShoppingBag />,
       title: "My Orders",
       subtitle: "Track, return, or buy things again",
-      action: () => navigate("/orders"),
+      action: () => navigate("/my_orders"),
     },
     { icon: <FaHeart />, title: "My Wishlist", subtitle: "Your saved items", action: () => navigate("/wishlist") },
     {

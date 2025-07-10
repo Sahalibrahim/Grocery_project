@@ -12,6 +12,9 @@ import AddressPage from './Components/AddressPage'
 import SellerPage from './Components/SellerPage'
 import ProductsPage from './Components/ProductsPage'
 import CartPage from './Components/CartPage'
+import PaymentPage from './Components/PaymentPage';
+import OrderSuccessPage from './Components/OrderSuccessPage';
+import OrdersPage from './Components/OrdersPage';
 
 function App() {
 
@@ -75,6 +78,25 @@ function App() {
               <CartPage />
             </ProtectedRoute>
           } />
+
+          <Route path='/payment' element={
+            <ProtectedRoute>
+              <PaymentPage/>
+            </ProtectedRoute>
+          }/>
+
+          <Route path='/order_success' element={
+            <ProtectedRoute>
+              <OrderSuccessPage/>
+            </ProtectedRoute>
+          }/>
+          
+          <Route path='/my_orders' element={
+            <ProtectedRoute>
+              <OrdersPage/>
+            </ProtectedRoute>
+          }/>
+
 
         </Routes>
       </Router>

@@ -32,7 +32,8 @@ const CartPage = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [showPromoInput, setShowPromoInput] = useState(false)
   const [animatingItems, setAnimatingItems] = useState(new Set())
-  const [defaultAddress,setDefaultAddress]=useState(null)
+  const [defaultAddress, setDefaultAddress] = useState(null)
+  const [orderDetails, setOrderDetails] = useState(null)
 
   const navigate = useNavigate()
 
@@ -92,23 +93,23 @@ const CartPage = () => {
     }
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     const fetch_address = async () => {
-      try{
-        const res = await axiosInstance.get('http://localhost:8000/api/products/get_address/',{
-          headers:{
-            Authorization:`Bearer ${localStorage.getItem('access_token')}`
+      try {
+        const res = await axiosInstance.get('http://localhost:8000/api/products/get_address/', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`
           }
         })
-        if(res.status===200){
+        if (res.status === 200) {
           setDefaultAddress(res.data)
         }
-      }catch(error){
+      } catch (error) {
         console.log(error)
       }
     }
     fetch_address()
-  },[])
+  }, [])
 
   const updateSubQuantity = async (itemId) => {
     try {
@@ -141,6 +142,25 @@ const CartPage = () => {
       }
     } catch (error) {
       console.log(error)
+    }
+  }
+
+  const handleCheckout = async () => {
+    try {
+      const res = await axiosInstance.post('http://localhost:8000/api/orders/proceed_to_checkout/', {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
+        }
+      }
+      )
+      if (res.status === 201) {
+        console.log(res.data)
+        setOrderDetails(res.data)
+        navigate('/payment', { state: { order: res.data } })
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error(error.response?.data?.error || "Failed to place order")
     }
   }
 
@@ -404,7 +424,7 @@ const CartPage = () => {
                 </div>
 
                 {/* Checkout Button */}
-                <button className="checkout-btn" onClick={() => navigate("/checkout")}>
+                <button className="checkout-btn" onClick={handleCheckout}>
                   <FaCreditCard className="me-2" />
                   Proceed to Checkout
                 </button>
@@ -441,7 +461,7 @@ const CartPage = () => {
                       <p className="text-muted">No default address set</p>
                     </div>
                   )}
-                  <button onClick={()=>navigate('/address')} className="btn btn-link btn-sm">Change Address</button>
+                  <button onClick={() => navigate('/address')} className="btn btn-link btn-sm">Change Address</button>
                 </div>
 
 
